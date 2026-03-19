@@ -6,6 +6,9 @@ provider:
   region: us-east-1
   runtime: java21
   timeout: 10
+  tracing:
+    apiGateway: true
+    lambda: true
   environment:
     TLA_TABLE_NAME: tla-resolver-table-dev
   iamRoleStatements:
