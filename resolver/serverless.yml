@@ -67,6 +67,7 @@ functions:
     handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest
     environment:
       SPRING_CLOUD_FUNCTION_DEFINITION: getAllTLAGroupsHandler
+    snapStart: true
     events:
       - httpApi:
           path: /tlas
@@ -75,6 +76,7 @@ functions:
     handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest
     environment:
       SPRING_CLOUD_FUNCTION_DEFINITION: getAllTLAsHandler
+    snapStart: true
     events:
       - httpApi:
           path: /tlas/all/{name}
@@ -83,6 +85,7 @@ functions:
     handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest
     environment:
       SPRING_CLOUD_FUNCTION_DEFINITION: getTLAGroupByNameHandler
+    snapStart: true
     events:
       - httpApi:
           path: /tlas/{groupName}
