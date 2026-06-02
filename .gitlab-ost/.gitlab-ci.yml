@@ -1,19 +1,34 @@
 variables:
   PROJECT_VERSION: 1.2-SNAPSHOT
-  SLS_IMAGE: registry.gitlab.ost.ch:45023/stefan.kapferer/serverless-framework-docker-image/sls:v1.1
+  SLS_IMAGE: $CI_REGISTRY_IMAGE/sls:latest
   SLS_AWS_SDK: 3
 
 stages:
   - pre
   - build
-  - deploy
+  - deploy-infrastructure
+  - deploy-services
 
 top-level-job:
   stage: pre
   script:
     - echo "Build will start soon..." # Workflows need to contain at least one top level job
 
+build-sls-image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $SLS_IMAGE .gitlab-ost
+    - docker push $SLS_IMAGE
+  rules:
+    - changes:
+        - .gitlab-ost/Dockerfile
+
 include:
-  - local: 'manager/manager.gitlab-ci.yml'
-  - local: 'resolver/resolver.gitlab-ci.yml'
-  - local: 'eventbridge/eventbridge.gitlab-ci.yml'
+  - local: "manager/manager.gitlab-ci.yml"
+  - local: "resolver/resolver.gitlab-ci.yml"
+  - local: "infrastructure/infrastructure.gitlab-ci.yml"
+  - local: "reports/reports.gitlab-ci.yml"

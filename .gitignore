@@ -48,3 +48,5 @@ obj/
 /**/*.DotSettings
 
 **/.vs/*
+**/node_modules/*
+**/.mvn/*

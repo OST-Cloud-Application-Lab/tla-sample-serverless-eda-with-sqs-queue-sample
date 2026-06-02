@@ -4,7 +4,7 @@ using TLAManager.Domain;
 
 namespace TLAManager.Infrastructure.Persistence;
 
-public class DynamoDbTLAReportRepository
+public class DynamoDbTLAReportRepository : ITLAReportRepository
 {
     private readonly IAmazonDynamoDB _client = new AmazonDynamoDBClient();
 
@@ -27,5 +27,16 @@ public class DynamoDbTLAReportRepository
             return TLAReportMapper.TlaReportFromDynamoDb(response.Item);
         }
         return null;
+    }
+
+    public async Task<TLAReport> SaveAsync(TLAReport report)
+    {
+        var request = new PutItemRequest
+        {
+            TableName = TableName,
+            Item = TLAReportMapper.TlaReportToDynamoDb(report)
+        };
+        await _client.PutItemAsync(request);
+        return report;
     }
 }

@@ -10,7 +10,7 @@ provider:
     apiGateway: true
     lambda: true
   environment:
-    TLA_TABLE_NAME: tla-resolver-table-dev
+    TLA_TABLE_NAME: tla-resolver-table-${sls:stage}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -43,27 +43,27 @@ resources:
     TLAAcceptedRule:
       Type: AWS::Events::Rule
       Properties:
-        EventBusName: !ImportValue TLAEventBusName
+        EventBusName: ${cf:tla-infrastructure-serverless-${sls:stage}.TLAEventBusName}
         EventPattern:
           source:
             - "TLAManager"
           detail-type:
             - "TLA_Accepted"
-        Name: tla-accepted-rule-1
+        Name: tla-accepted-rule-${sls:stage}
         Targets:
-          - Arn: !GetAtt 
+          - Arn: !GetAtt
               - AcceptTlaLambdaFunction
               - Arn
             Id: tla_accepted
-    PermissionInvokeLambda: 
+    PermissionInvokeLambda:
       Type: AWS::Lambda::Permission
-      Properties: 
-          FunctionName: !Ref "AcceptTlaLambdaFunction"
-          Action: "lambda:InvokeFunction"
-          Principal: "events.amazonaws.com"
-          SourceArn: !GetAtt
-                  - "TLAAcceptedRule"
-                  - "Arn"
+      Properties:
+        FunctionName: !Ref "AcceptTlaLambdaFunction"
+        Action: "lambda:InvokeFunction"
+        Principal: "events.amazonaws.com"
+        SourceArn: !GetAtt
+          - "TLAAcceptedRule"
+          - "Arn"
 
 functions:
   readAllTlaGroups:
@@ -96,7 +96,7 @@ functions:
   acceptTla:
     handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest
     environment:
-      SPRING_CLOUD_FUNCTION_DEFINITION: acceptTLAHandler     
+      SPRING_CLOUD_FUNCTION_DEFINITION: acceptTLAHandler
   seedDatabase:
     handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest
     environment:

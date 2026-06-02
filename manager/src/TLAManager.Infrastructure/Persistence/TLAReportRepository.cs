@@ -8,4 +8,9 @@ public class TLAReportRepository(DynamoDbTLAReportRepository repository) : ITLAR
     {
         return await repository.FindByIdAsync(id);
     }
+
+    public async Task<TLAReport> SaveAsync(TLAReport report)
+    {
+        return await repository.SaveAsync(report);
+    }
 }

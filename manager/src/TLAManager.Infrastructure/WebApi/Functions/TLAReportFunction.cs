@@ -18,7 +18,7 @@ public class TLAReportFunction : FunctionBase
         context.Logger.LogInformation($"{nameof(TLAReportFunction)} called");
 
         using var scope = ServiceProvider.CreateScope();
-        var service = scope.ServiceProvider.GetService<IReportApplicationService>()!;
+        var service = scope.ServiceProvider.GetService<ITLAReportApplicationService>()!;
         var responseFactory = scope.ServiceProvider.GetService<ResponseFactory>()!;
 
         try

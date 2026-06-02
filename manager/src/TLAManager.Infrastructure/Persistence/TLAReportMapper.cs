@@ -11,11 +11,12 @@ public static class TLAReportMapper
 
     public static TLAReport TlaReportFromDynamoDb(Dictionary<string, AttributeValue> items)
     {
-        var builder = new TLAReport(
-            items[IdField].S,
-            Enum.Parse<TLAReportStatus>(items[StatusField].S, ignoreCase: true),
-            items[UrlField].S
-        );
+        var builder = new TLAReport
+        {
+            Id = items[IdField].S,
+            Status = Enum.Parse<TLAReportStatus>(items[StatusField].S, ignoreCase: true),
+            Url = items[UrlField].S
+        };
 
         return builder;
     }

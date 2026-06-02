@@ -7,6 +7,6 @@ public static class TLAReportApiDtoMapper
 {
     public static ReportDto TLAReportToDto(TLAReport report)
     {
-        return new ReportDto(report.Status, report.Url);
+        return new ReportDto(report.Id, report.Status.ToString(), report.Url);
     }
 }

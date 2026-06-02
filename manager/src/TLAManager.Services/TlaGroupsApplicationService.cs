@@ -10,6 +10,14 @@ public class TlaGroupsApplicationService(ITLAGroupRepository repository) : ITlaG
         return await FindAllTlaGroupsAsync(TLAStatus.Accepted);
     }
 
+    public async Task<List<TLAGroup>> FindAllTlaGroupsByNamesAsync(List<string> groupNames)
+    {
+        var groups = await repository.FindAllAsync();
+        return groups.Where(group => groupNames.Contains(group.Name.Name))
+            .Select(group => FilterTlaStatus(group, TLAStatus.Accepted))
+            .ToList();
+    }
+
     public async Task<List<TLAGroup>> FindAllTlaGroupsAsync(TLAStatus status)
     {
         var groups = await repository.FindAllAsync();

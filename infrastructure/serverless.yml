@@ -1,0 +1,39 @@
+org: ${env:TLA_SAMPLE_APP_SERVERLESS_ORG}
+app: tla-infrastructure-serverless
+service: tla-infrastructure-serverless
+
+provider:
+  name: aws
+  region: us-east-1
+  timeout: 10
+
+resources:
+  Resources:
+    TLAEventBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: TLAEventBus-${sls:stage}
+
+    TLAReportQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: tla-report-queue-${sls:stage}
+        VisibilityTimeout: 300
+
+  Outputs:
+    TLAEventBusName:
+      Value: !GetAtt TLAEventBus.Name
+      Export:
+        Name: TLAEventBusName-${sls:stage}
+    TLAEventBusArn:
+      Value: !GetAtt TLAEventBus.Arn
+      Export:
+        Name: TLAEventBusArn-${sls:stage}
+    TLAReportQueueArn:
+      Value: !GetAtt TLAReportQueue.Arn
+      Export:
+        Name: TLAReportQueueArn-${sls:stage}
+    TLAReportQueueUrl:
+      Value: !Ref TLAReportQueue
+      Export:
+        Name: TLAReportQueueUrl-${sls:stage}

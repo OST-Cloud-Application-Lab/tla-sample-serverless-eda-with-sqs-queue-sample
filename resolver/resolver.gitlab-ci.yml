@@ -1,6 +1,6 @@
 stages:
   - build
-  - deploy
+  - deploy-services
 
 .resolver:
   before_script:
@@ -20,7 +20,7 @@ build-resolver:
 
 deploy-resolver:
   extends: .resolver
-  stage: deploy
+  stage: deploy-services
   image: $SLS_IMAGE
   environment: dev
   variables:
@@ -38,7 +38,7 @@ deploy-resolver:
 
 undeploy-resolver:
   extends: .resolver
-  stage: deploy
+  stage: deploy-services
   image: $SLS_IMAGE
   environment: dev
   variables:

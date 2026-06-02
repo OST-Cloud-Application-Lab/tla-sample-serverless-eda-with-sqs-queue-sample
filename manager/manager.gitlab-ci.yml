@@ -1,6 +1,6 @@
 stages:
   - build
-  - deploy
+  - deploy-services
 
 .manager:
   before_script:
@@ -25,7 +25,7 @@ build-manager:
 
 deploy-manager:
   extends: .manager
-  stage: deploy
+  stage: deploy-services
   image: $SLS_IMAGE
   environment: dev
   variables:
@@ -43,7 +43,7 @@ deploy-manager:
 
 undeploy-manager:
   extends: .manager
-  stage: deploy
+  stage: deploy-services
   image: $SLS_IMAGE
   environment: dev
   variables:

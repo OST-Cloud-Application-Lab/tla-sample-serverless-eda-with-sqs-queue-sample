@@ -1,13 +1,14 @@
 stages:
-  - deploy
+  - deploy-infrastructure
+  - deploy-services
 
-.eventbridge:
+.infrastructure:
   before_script:
-    - cd eventbridge
+    - cd infrastructure
 
-deploy-eventbridge:
-  extends: .eventbridge
-  stage: deploy
+deploy-infrastructure:
+  extends: .infrastructure
+  stage: deploy-infrastructure
   image: $SLS_IMAGE
   environment: dev
   variables:
@@ -22,9 +23,9 @@ deploy-eventbridge:
     - echo "Application successfully deployed."
   dependencies: []
 
-undeploy-eventbridge:
-  extends: .eventbridge
-  stage: deploy
+undeploy-infrastructure:
+  extends: .infrastructure
+  stage: deploy-infrastructure
   image: $SLS_IMAGE
   environment: dev
   variables:

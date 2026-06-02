@@ -1,0 +1,71 @@
+org: ${env:TLA_SAMPLE_APP_SERVERLESS_ORG}
+app: tla-reports-serverless
+service: tla-reports-serverless
+
+provider:
+  name: aws
+  region: us-east-1
+  runtime: python3.14
+  environment:
+    TLA_REPORT_BUCKET: tla-reports-bucket-${sls:stage}-${aws:accountId}
+    TLA_EVENT_BUS_NAME: ${cf:tla-infrastructure-serverless-${sls:stage}.TLAEventBusName}
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+      Resource: "arn:aws:s3:::${self:provider.environment.TLA_REPORT_BUCKET}/*"
+    - Effect: Allow
+      Action:
+        - events:PutEvents
+      Resource:
+        - ${cf:tla-infrastructure-serverless-${sls:stage}.TLAEventBusArn}
+
+# TODO shouldn't be needed?
+plugins:
+  - serverless-python-requirements
+
+functions:
+  generateReport:
+    handler: reports.generate_report
+    timeout: 30
+    # reservedConcurrency: 1 # TODO does not work
+    events:
+      - sqs:
+          arn: ${cf:tla-infrastructure-serverless-${sls:stage}.TLAReportQueueArn}
+          batchSize: 1
+          maximumConcurrency: 2 # TODO really needed= > error below 2 ??
+
+resources:
+  Resources:
+    TLAReportBucket:
+      Type: "AWS::S3::Bucket"
+      Properties:
+        BucketName: ${self:provider.environment.TLA_REPORT_BUCKET}
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: BucketOwnerEnforced
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          IgnorePublicAcls: false
+          BlockPublicPolicy: false
+          RestrictPublicBuckets: false
+    TLAReportBucketPolicy:
+      Type: "AWS::S3::BucketPolicy"
+      Properties:
+        Bucket: !Ref TLAReportBucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: "*"
+              Action: "s3:GetObject"
+              Resource: !Sub "${TLAReportBucket.Arn}/*"
+
+custom:
+  pythonRequirements:
+    dockerizePip: false
+    slim: true
+    noDeploy:
+      - boto3

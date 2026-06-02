@@ -1,6 +1,7 @@
 org: ${env:TLA_SAMPLE_APP_SERVERLESS_ORG}
 app: tla-manager-serverless
 service: tla-manager-serverless
+
 provider:
   name: aws
   region: us-east-1
@@ -10,8 +11,10 @@ provider:
     apiGateway: true
     lambda: true
   environment:
-    TLA_TABLE_NAME: tla-manager-table-dev
-    TLA_REPORT_TABLE_NAME: tla-report-table-dev
+    TLA_TABLE_NAME: tla-manager-table-${sls:stage}
+    TLA_REPORT_TABLE_NAME: tla-report-table-${sls:stage}
+    TLA_REPORT_QUEUE_URL: ${cf:tla-infrastructure-serverless-${sls:stage}.TLAReportQueueUrl}
+    TLA_EVENT_BUS_NAME: ${cf:tla-infrastructure-serverless-${sls:stage}.TLAEventBusName}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -24,20 +27,25 @@ provider:
         - dynamodb:DeleteItem
         - dynamodb:DescribeTable
       Resource:
-        - !GetAtt TLADynamoDBTable.Arn
+        - !GetAtt TLATable.Arn
         - !GetAtt TLAReportTable.Arn
     - Effect: Allow
       Action:
         - events:PutEvents
       Resource:
-        - "arn:aws:events:*"
+        - ${cf:tla-infrastructure-serverless-${sls:stage}.TLAEventBusArn}
+    - Effect: Allow
+      Action:
+        - sqs:SendMessage
+      Resource:
+        - ${cf:tla-infrastructure-serverless-${sls:stage}.TLAReportQueueArn}
 
 package:
   artifact: bin/release/net10.0/deploy-package.zip
 
 resources:
   Resources:
-    TLADynamoDBTable:
+    TLATable:
       Type: "AWS::DynamoDB::Table"
       Properties:
         BillingMode: PAY_PER_REQUEST
@@ -97,6 +105,21 @@ functions:
       - httpApi:
           path: /reports/{id}
           method: get
+  updateReport:
+    handler: TLAManager.Infrastructure::TLAManager.Infrastructure.WebApi.Functions.UpdateTLAReportFunction::HandleTLAReportChangedEventAsync
+    events:
+      - eventBridge:
+          eventBus: ${cf:tla-infrastructure-serverless-${sls:stage}.TLAEventBusArn}
+          pattern:
+            source:
+              - tla-reports
+            detail-type:
+              - TLAReport_Changed
+            detail:
+              metadata:
+                domain:
+                  event:
+                    - TLAReport_Changed
 
   seedDatabase:
     handler: TLAManager.Infrastructure::TLAManager.Infrastructure.Migration.DatabaseSeedHandler::SeedAsync
