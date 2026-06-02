@@ -33,12 +33,31 @@ public class DynamoDbReportRepository : IReportRepository
 
     public async Task<Report> SaveAsync(Report report)
     {
+        var item = ReportMapper.ReportToDynamoDb(report);
+
         var request = new PutItemRequest
         {
             TableName = TableName,
-            Item = ReportMapper.ReportToDynamoDb(report)
+            Item = item,
+            ConditionExpression = "attribute_not_exists(id) OR #statusVal < :newStatusVal",
+            ExpressionAttributeNames = new Dictionary<string, string>
+        {
+            { "#statusVal", "statusValue" }
+        },
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+        {
+            { ":newStatusVal", new AttributeValue { N = ((int)report.Status).ToString() } }
+        }
         };
-        await _client.PutItemAsync(request);
-        return report;
+
+        try
+        {
+            await _client.PutItemAsync(request);
+            return report;
+        }
+        catch (ConditionalCheckFailedException)
+        {
+            throw new InvalidOperationException($"Invalid state transition to {report.Status}.");
+        }
     }
 }

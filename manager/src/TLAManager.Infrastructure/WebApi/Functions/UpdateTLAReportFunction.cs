@@ -34,7 +34,6 @@ public class UpdateTLAReportFunction : FunctionBase
                 reportChangedEvent.Status,
                 reportChangedEvent.Url);
 
-            var report = await service.GetReportAsync(reportChangedEvent.ReportId);
 
             if (!Enum.TryParse<ReportStatus>(reportChangedEvent.Status, ignoreCase: true, out var incomingStatus))
             {
@@ -42,16 +41,7 @@ public class UpdateTLAReportFunction : FunctionBase
                 return;
             }
 
-            if (!ShouldApplyStatusUpdate(report.Status, incomingStatus))
-            {
-                context.Logger.LogInformation(
-                    "Ignoring stale status update for report {reportId}. Current={currentStatus}, Incoming={incomingStatus}",
-                    reportChangedEvent.ReportId,
-                    report.Status,
-                    incomingStatus);
-                return;
-            }
-
+            var report = await service.GetReportAsync(reportChangedEvent.ReportId);
             report.Status = incomingStatus;
             report.Url = reportChangedEvent.Url ?? report.Url;
 
@@ -65,21 +55,5 @@ public class UpdateTLAReportFunction : FunctionBase
         {
             context.Logger.LogError(e, "Internal error has happened");
         }
-    }
-
-    private static bool ShouldApplyStatusUpdate(ReportStatus currentStatus, ReportStatus incomingStatus)
-    {
-        return ToOrder(incomingStatus) >= ToOrder(currentStatus);
-    }
-
-    private static int ToOrder(ReportStatus status)
-    {
-        return status switch
-        {
-            ReportStatus.Waiting => 0,
-            ReportStatus.Running => 1,
-            ReportStatus.Finished => 2,
-            _ => -1
-        };
     }
 }

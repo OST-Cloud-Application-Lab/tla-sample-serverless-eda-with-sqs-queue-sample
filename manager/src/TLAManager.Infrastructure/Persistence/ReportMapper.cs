@@ -7,6 +7,7 @@ public static class ReportMapper
 {
     private static readonly string IdField = "id";
     private static readonly string StatusField = "status";
+    private static readonly string StatusValueField = "statusValue";
     private static readonly string UrlField = "url";
 
     public static Report ReportFromDynamoDb(Dictionary<string, AttributeValue> items)
@@ -27,7 +28,8 @@ public static class ReportMapper
         {
             { IdField, new AttributeValue { S = report.Id } },
             { StatusField, new AttributeValue { S = report.Status.ToString() } },
-            { UrlField, new AttributeValue { S = report.Url } }
+            { UrlField, new AttributeValue { S = report.Url } },
+            { StatusValueField, new AttributeValue { N = ((int)report.Status).ToString() } }
         };
 
         return map;
