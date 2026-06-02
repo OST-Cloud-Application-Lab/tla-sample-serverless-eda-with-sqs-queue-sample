@@ -2,10 +2,9 @@ using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
+using TLAManager.Application.Exceptions;
+using TLAManager.Application.Interfaces;
 using TLAManager.Infrastructure.WebApi.Mappers;
-using TLAManager.Services;
-using TLAManager.Services.Exceptions;
-
 
 namespace TLAManager.Infrastructure.WebApi.Functions;
 
@@ -18,17 +17,17 @@ public class TLAReportFunction : FunctionBase
         context.Logger.LogInformation($"{nameof(TLAReportFunction)} called");
 
         using var scope = ServiceProvider.CreateScope();
-        var service = scope.ServiceProvider.GetService<ITLAReportApplicationService>()!;
-        var responseFactory = scope.ServiceProvider.GetService<ResponseFactory>()!;
+        var service = scope.ServiceProvider.GetRequiredService<IReportApplicationService>();
+        var responseFactory = scope.ServiceProvider.GetRequiredService<ResponseFactory>();
 
         try
         {
             var id = request.PathParameters[ReportIdParam];
-            var tlaReport = await service.GetTLAReportAsync(id);
-            var tlaReportDto = TLAReportApiDtoMapper.TLAReportToDto(tlaReport);
+            var tlaReport = await service.GetReportAsync(id);
+            var tlaReportDto = TLAReportApiDtoMapper.ReportToDto(tlaReport);
             return responseFactory.CreateResponse(tlaReportDto, HttpStatusCode.OK);
         }
-        catch (TLAReportIdDoesNotExistException e)
+        catch (ReportIdDoesNotExistException e)
         {
             context.Logger.LogError(e, "TLA Report ID not found");
             return responseFactory.CreateErrorResponse(HttpStatusCode.BadRequest, e.Message, context);

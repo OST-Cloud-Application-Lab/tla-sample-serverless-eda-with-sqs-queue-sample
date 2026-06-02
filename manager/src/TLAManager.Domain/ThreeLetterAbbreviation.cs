@@ -14,9 +14,9 @@ public class ThreeLetterAbbreviation : IComparable<ThreeLetterAbbreviation>
 
     private readonly Uri? _uri;
 
-    public TLAStatus Status { get; private set; }
+    public Status Status { get; private set; }
 
-    public ThreeLetterAbbreviation(ShortName name, string meaning, IEnumerable<string> alternativeMeanings, string? link, TLAStatus status)
+    public ThreeLetterAbbreviation(ShortName name, string meaning, IEnumerable<string> alternativeMeanings, string? link, Status status)
     {
         if (string.IsNullOrEmpty(meaning))
         {
@@ -40,26 +40,26 @@ public class ThreeLetterAbbreviation : IComparable<ThreeLetterAbbreviation>
 
     public void Accept()
     {
-        if (Status != TLAStatus.Proposed)
+        if (Status != Status.Proposed)
             throw new InvalidTLAStateTransitionException("A TLA has to be in state PROPOSED to be accepted.");
 
-        Status = TLAStatus.Accepted;
+        Status = Status.Accepted;
     }
 
     public void Decline()
     {
-        if (Status != TLAStatus.Proposed)
+        if (Status != Status.Proposed)
             throw new InvalidTLAStateTransitionException("A TLA has to be in state PROPOSED to be declined.");
 
-        Status = TLAStatus.Declined;
+        Status = Status.Declined;
     }
 
     public void Archive()
     {
-        if (Status != TLAStatus.Accepted)
+        if (Status != Status.Accepted)
             throw new InvalidTLAStateTransitionException("A TLA has to be in state ACCEPTED to be archived.");
 
-        Status = TLAStatus.Archived;
+        Status = Status.Archived;
     }
 
     public string? GetAbsoluteUri()

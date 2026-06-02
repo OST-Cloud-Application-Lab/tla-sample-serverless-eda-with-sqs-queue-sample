@@ -1,10 +1,10 @@
 using Amazon.Lambda.Core;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
+using TLAManager.Application.Exceptions;
+using TLAManager.Application.Interfaces;
 using TLAManager.Domain;
-using TLAManager.Infrastructure.WebApi.Events;
-using TLAManager.Services;
-using TLAManager.Services.Exceptions;
+using TLAManager.Infrastructure.Events;
 
 namespace TLAManager.Infrastructure.WebApi.Functions;
 
@@ -12,10 +12,10 @@ public class UpdateTLAReportFunction : FunctionBase
 {
     public async Task HandleTLAReportChangedEventAsync(JsonElement eventDetail, ILambdaContext context)
     {
-        context.Logger.LogInformation("UpdateReportFunction called with event detail");
+        context.Logger.LogInformation("{functionName} called", nameof(UpdateTLAReportFunction));
 
         using var scope = ServiceProvider.CreateScope();
-        var service = scope.ServiceProvider.GetService<ITLAReportApplicationService>()!;
+        var service = scope.ServiceProvider.GetRequiredService<IReportApplicationService>();
 
         try
         {
@@ -26,43 +26,38 @@ public class UpdateTLAReportFunction : FunctionBase
             }
 
             var domainEvent = JsonSerializer.Deserialize<GenericDomainEvent<ReportChangedEventDTO>>(payloadElement.GetRawText(), JsonOptions.SerializerOptions)!;
-
             var reportChangedEvent = domainEvent.Data;
 
             context.Logger.LogInformation(
                 "Report updated successfully. ReportId: {reportId}, Status: {status}, Url: {url}",
                 reportChangedEvent.ReportId,
                 reportChangedEvent.Status,
-                reportChangedEvent.Url
-            );
+                reportChangedEvent.Url);
 
-            var report = await service.GetTLAReportAsync(reportChangedEvent.ReportId);
+            var report = await service.GetReportAsync(reportChangedEvent.ReportId);
 
-            // TODO better idea?
-            if (!Enum.TryParse<TLAReportStatus>(reportChangedEvent.Status, ignoreCase: true, out var incomingStatus))
+            if (!Enum.TryParse<ReportStatus>(reportChangedEvent.Status, ignoreCase: true, out var incomingStatus))
             {
                 context.Logger.LogError("Ignoring report update with invalid status '{status}' for report {reportId}", reportChangedEvent.Status, reportChangedEvent.ReportId);
                 return;
             }
 
-            // TODO better idea?
             if (!ShouldApplyStatusUpdate(report.Status, incomingStatus))
             {
                 context.Logger.LogInformation(
                     "Ignoring stale status update for report {reportId}. Current={currentStatus}, Incoming={incomingStatus}",
                     reportChangedEvent.ReportId,
                     report.Status,
-                    incomingStatus
-                );
+                    incomingStatus);
                 return;
             }
 
             report.Status = incomingStatus;
             report.Url = reportChangedEvent.Url ?? report.Url;
 
-            await service.AddTLAReportAsync(report);
+            await service.SaveReportAsync(report);
         }
-        catch (TLAReportIdDoesNotExistException e)
+        catch (ReportIdDoesNotExistException e)
         {
             context.Logger.LogError(e, "TLA Report ID not found");
         }
@@ -72,20 +67,18 @@ public class UpdateTLAReportFunction : FunctionBase
         }
     }
 
-    // TODO better idea?
-    private static bool ShouldApplyStatusUpdate(TLAReportStatus currentStatus, TLAReportStatus incomingStatus)
+    private static bool ShouldApplyStatusUpdate(ReportStatus currentStatus, ReportStatus incomingStatus)
     {
         return ToOrder(incomingStatus) >= ToOrder(currentStatus);
     }
 
-    // TODO better idea?
-    private static int ToOrder(TLAReportStatus status)
+    private static int ToOrder(ReportStatus status)
     {
         return status switch
         {
-            TLAReportStatus.Waiting => 0,
-            TLAReportStatus.Running => 1,
-            TLAReportStatus.Finished => 2,
+            ReportStatus.Waiting => 0,
+            ReportStatus.Running => 1,
+            ReportStatus.Finished => 2,
             _ => -1
         };
     }

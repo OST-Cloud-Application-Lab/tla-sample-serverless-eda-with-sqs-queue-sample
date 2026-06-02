@@ -1,4 +1,4 @@
-namespace TLAManager.Infrastructure.WebApi.Events;
+namespace TLAManager.Infrastructure.Events;
 
 public class ReportChangedEventDTO
 {

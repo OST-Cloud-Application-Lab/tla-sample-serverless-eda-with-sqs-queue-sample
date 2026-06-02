@@ -1,6 +1,6 @@
 namespace TLAManager.Domain;
 
-public enum TLAStatus
+public enum Status
 {
     Proposed,
     Accepted,

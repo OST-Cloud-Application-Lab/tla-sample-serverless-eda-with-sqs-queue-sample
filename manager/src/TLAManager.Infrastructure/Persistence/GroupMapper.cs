@@ -3,7 +3,7 @@ using TLAManager.Domain;
 
 namespace TLAManager.Infrastructure.Persistence;
 
-public static class TLAGroupMapper
+public static class GroupMapper
 {
     private static readonly string NameField = "name";
     private static readonly string DescriptionField = "description";
@@ -13,9 +13,9 @@ public static class TLAGroupMapper
     private static readonly string UrlField = "url";
     private static readonly string StatusField = "status";
 
-    public static TLAGroup TlaGroupFromDynamoDb(Dictionary<string, AttributeValue> items)
+    public static Group GroupFromDynamoDb(Dictionary<string, AttributeValue> items)
     {
-        var builder = new TLAGroup(
+        var builder = new Group(
             new ShortName(items[NameField].S),
             items[DescriptionField].S,
             items[TlasField].L.Select(av =>
@@ -29,7 +29,7 @@ public static class TLAGroupMapper
                 }
 
                 var link = tlaMap.TryGetValue(UrlField, out var linkValue) ? linkValue.S : null;
-                var status = Enum.Parse<TLAStatus>(tlaMap[StatusField].S);
+                var status = Enum.Parse<Status>(tlaMap[StatusField].S);
                 var tla = new ThreeLetterAbbreviation(
                     new ShortName(tlaMap[NameField].S),
                     tlaMap[MeaningField].S,
@@ -44,7 +44,7 @@ public static class TLAGroupMapper
         return builder;
     }
 
-    public static Dictionary<string, AttributeValue> TlaGroupToDynamoDb(TLAGroup group)
+    public static Dictionary<string, AttributeValue> GroupToDynamoDb(Group group)
     {
         var map = new Dictionary<string, AttributeValue>
         {

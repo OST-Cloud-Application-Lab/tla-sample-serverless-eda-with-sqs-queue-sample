@@ -1,8 +1,8 @@
 using Amazon.Lambda.Core;
 using Microsoft.Extensions.DependencyInjection;
+using TLAManager.Application.Interfaces;
 using TLAManager.Domain;
 using TLAManager.Infrastructure.WebApi;
-using TLAManager.Services;
 
 namespace TLAManager.Infrastructure.Migration;
 
@@ -11,11 +11,11 @@ public class DatabaseSeedHandler : FunctionBase
     public async Task<string> SeedAsync(string unused, ILambdaContext context)
     {
         using var scope = ServiceProvider.CreateScope();
-        var service = scope.ServiceProvider.GetService<ITlaGroupsApplicationService>()!;
+        var service = scope.ServiceProvider.GetRequiredService<IGroupsApplicationService>();
 
         try
         {
-            await service.AddTlaGroupAsync(new TLAGroup(
+            await service.AddGroupAsync(new Group(
                 new ShortName("common"),
                 "Common Tla group",
                 [
@@ -24,12 +24,12 @@ public class DatabaseSeedHandler : FunctionBase
                         "Three Letter Abbreviation",
                         new List<string> { "Three Letter Acronym" },
                         null,
-                        TLAStatus.Accepted
+                        Status.Accepted
                     )
                 ]
             ));
 
-            await service.AddTlaGroupAsync(new TLAGroup(
+            await service.AddGroupAsync(new Group(
                 new ShortName("AppArch"),
                 "Application Architecture",
                 [
@@ -38,12 +38,12 @@ public class DatabaseSeedHandler : FunctionBase
                         "Architectural Decision Record",
                         new List<string>(),
                         "https://adr.github.io/",
-                        TLAStatus.Accepted
+                        Status.Accepted
                     )
                 ]
             ));
 
-            await service.AddTlaGroupAsync(new TLAGroup(
+            await service.AddGroupAsync(new Group(
                 new ShortName("DDD"),
                 "Domain-Driven Design",
                 [
@@ -52,35 +52,35 @@ public class DatabaseSeedHandler : FunctionBase
                         "Open Host Service",
                         new List<string>(),
                         null,
-                        TLAStatus.Accepted
+                        Status.Accepted
                     ),
                     new(
                         new ShortName("PL"),
                         "Published Language",
                         new List<string>(),
                         null,
-                        TLAStatus.Accepted
+                        Status.Accepted
                     ),
                     new(
                         new ShortName("CF"),
                         "Conformist",
                         new List<string>(),
                         null,
-                        TLAStatus.Accepted
+                        Status.Accepted
                     ),
                     new(
                         new ShortName("SK"),
                         "Shared Kernel",
                         new List<string>(),
                         null,
-                        TLAStatus.Accepted
+                        Status.Accepted
                     ),
                     new(
                         new ShortName("ACL"),
                         "Anticorruption Layer",
                         new List<string>(),
                         null,
-                        TLAStatus.Accepted
+                        Status.Accepted
                     )
                 ]
             ));

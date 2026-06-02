@@ -1,12 +1,12 @@
-using System.Net;
-using System.Text.Json;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Microsoft.Extensions.DependencyInjection;
-using TLAManager.Services;
+using System.Net;
+using System.Text.Json;
+using TLAManager.Application.Exceptions;
+using TLAManager.Application.Interfaces;
 using TLAManager.Infrastructure.WebApi.Dtos;
 using TLAManager.Infrastructure.WebApi.Mappers;
-using TLAManager.Services.Exceptions;
 
 namespace TLAManager.Infrastructure.WebApi.Functions;
 
@@ -19,19 +19,19 @@ public class AddTlaFunction : FunctionBase
         context.Logger.LogInformation($"{nameof(AddTlaFunction)} called");
 
         using var scope = ServiceProvider.CreateScope();
-        var service = scope.ServiceProvider.GetService<ITlaGroupsApplicationService>()!;
-        var responseFactory = scope.ServiceProvider.GetService<ResponseFactory>()!;
+        var service = scope.ServiceProvider.GetRequiredService<IGroupsApplicationService>();
+        var responseFactory = scope.ServiceProvider.GetRequiredService<ResponseFactory>();
 
         try
         {
             var name = request.PathParameters[GroupNameParam];
             var tlaDto = JsonSerializer.Deserialize<TLADto>(request.Body, JsonOptions.SerializerOptions);
             var tla = TLAApiDtoMapper.TlaDtoToTla(tlaDto!);
-            var tlaGroup = await service.AddTlaAsync(name, tla);
-            var tlaGroupDto = TLAApiDtoMapper.TlaGroupToDto(tlaGroup);
-            return responseFactory.CreateResponse(tlaGroupDto, HttpStatusCode.Created);
+            var group = await service.AddTlaToGroupAsync(name, tla);
+            var groupDto = TLAApiDtoMapper.GroupToDto(group);
+            return responseFactory.CreateResponse(groupDto, HttpStatusCode.Created);
         }
-        catch (TLAGroupNameDoesNotExistException e)
+        catch (GroupNameDoesNotExistException e)
         {
             context.Logger.LogError(e, "TLA group name not found");
             return responseFactory.CreateErrorResponse(HttpStatusCode.BadRequest, e.Message, context);

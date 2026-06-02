@@ -5,9 +5,9 @@ namespace TLAManager.Infrastructure.WebApi.Mappers;
 
 public static class TLAApiDtoMapper
 {
-    public static TLAGroupDto TlaGroupToDto(TLAGroup group)
+    public static GroupDto GroupToDto(Group group)
     {
-        return new TLAGroupDto(
+        return new GroupDto(
             group.Name.Name,
             group.Description,
             group.Tlas.Select(tla => new TLADto(tla.Name.Name, tla.Meaning)
@@ -17,11 +17,11 @@ public static class TLAApiDtoMapper
         );
     }
 
-    public static TLAGroup CreateTlaGroupFromDto(TLAGroupDto groupDto)
+    public static Group CreateGroupFromDto(GroupDto groupDto)
     {
         var name = new ShortName(groupDto.Name);
         var tlas = groupDto.Tlas.Select(TlaDtoToTla);
-        var tlaGroup = new TLAGroup(name, groupDto.Description, tlas);
+        var tlaGroup = new Group(name, groupDto.Description, tlas);
         return tlaGroup;
     }
 
@@ -29,7 +29,7 @@ public static class TLAApiDtoMapper
     {
         var shortName = new ShortName(tlaDto.Name);
         var alternativeMeanings = tlaDto.AlternativeMeanings?.ToList() ?? [];
-        var defaultStatus = TLAStatus.Proposed;
+        var defaultStatus = Status.Proposed;
         var tla = new ThreeLetterAbbreviation(shortName, tlaDto.Meaning, alternativeMeanings, tlaDto.Link, defaultStatus);
         return tla;
     }

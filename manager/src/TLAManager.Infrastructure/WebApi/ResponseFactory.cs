@@ -1,7 +1,7 @@
-using System.Net;
-using System.Text.Json;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
+using System.Net;
+using System.Text.Json;
 
 namespace TLAManager.Infrastructure.WebApi;
 

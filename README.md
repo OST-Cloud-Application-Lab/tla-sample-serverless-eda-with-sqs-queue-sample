@@ -6,9 +6,7 @@ This repository implements the [Three Letter Abbreviations (TLA) Sample Applicat
 It can easily be deployed on AWS.
 The following graphic gives an architecture overview of the app:
 
-<!-- TODO -->
-
-![TLA Sample App - Implemented Serverless](./docs/images/Architecture_Overview.jpg)
+![TLA Sample App - Implemented Serverless](./docs/images/architecture_overview.jpg)
 
 The app uses the following AWS services:
 
@@ -35,9 +33,7 @@ The app uses the following tools and frameworks:
 
 The following graphic shows a more detailed architecture overview:
 
-<!-- TODO -->
-
-![TLA Sample App - Implemented Serverless](./docs/images/Architecture_Detail.jpg)
+![TLA Sample App - Implemented Serverless](./docs/images/architecture_detail.jpg)
 
 ## Infrastructure
 
@@ -169,7 +165,7 @@ This section documents the queue message type.
 
 In the [Amazon documentation](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html) is described how to use lambdas with Amazon SQS.
 
-#### TLA Report Request Event
+#### TLA Report Request Message
 
 When a TLA report is requested the "TLA Manager" sends a message into the simple queue service.
 The message includes all the necessary information for the "TLA Reports" to generate the requested report.
@@ -444,7 +440,8 @@ After this event is handled by the resolver, the query endpoints of the resolver
 #### Create a TLA Report
 
 With the `/reports` (POST) endpoint you can request the creation of a new report.
-The TLA groups to be included in the report (1..N) must be specified in the request body.
+The TLA groups to be included in the report must be specified in the request body.
+If omitted, all `ACCEPTED` groups will be included by default.
 
 **Sample CURL**:
 

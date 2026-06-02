@@ -1,4 +1,4 @@
-namespace TLAManager.Infrastructure.WebApi.Events;
+namespace TLAManager.Infrastructure.Events;
 
 public class DomainEventMetadata
 {
@@ -7,5 +7,4 @@ public class DomainEventMetadata
     public string Created_at { get; set; } = string.Empty;
 
     public DomainEventDomainMetaData? Domain { get; set; } = null;
-
 }

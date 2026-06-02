@@ -1,6 +1,6 @@
 namespace TLAManager.Domain;
 
-public enum TLAReportStatus
+public enum ReportStatus
 {
     Waiting,
     Running,

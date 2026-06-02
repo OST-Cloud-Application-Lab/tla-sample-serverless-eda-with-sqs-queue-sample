@@ -16,6 +16,6 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TLAManager.Services\TLAManager.Services.csproj" />
+    <ProjectReference Include="..\TLAManager.Application\TLAManager.Application.csproj" />
   </ItemGroup>
 </Project>

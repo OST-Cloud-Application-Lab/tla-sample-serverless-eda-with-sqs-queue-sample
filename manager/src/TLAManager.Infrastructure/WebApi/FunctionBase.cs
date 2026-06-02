@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
+using TLAManager.Application.Extensions;
 using TLAManager.Infrastructure.Extensions;
-using TLAManager.Services.Extensions;
 
 namespace TLAManager.Infrastructure.WebApi;
 
@@ -11,7 +11,7 @@ public abstract class FunctionBase
     protected FunctionBase()
     {
         var services = new ServiceCollection();
-        services.AddServices().AddInfrastructure();
+        services.AddApplication().AddInfrastructure();
         ServiceProvider = services.BuildServiceProvider();
     }
 }

@@ -3,16 +3,18 @@ using TLAManager.Domain.Exceptions;
 
 namespace TLAManager.Domain;
 
-public class TLAGroup
+public class Group
 {
     public const string CommonGroupName = "common";
 
     public ShortName Name { get; }
+
     public string Description { get; }
+
     private readonly SortedSet<ThreeLetterAbbreviation> _tlas = [];
     public ImmutableSortedSet<ThreeLetterAbbreviation> Tlas => _tlas.ToImmutableSortedSet();
 
-    public TLAGroup(ShortName name, string description, IEnumerable<ThreeLetterAbbreviation> tlas)
+    public Group(ShortName name, string description, IEnumerable<ThreeLetterAbbreviation> tlas)
     {
         Name = name;
         Description = description;
@@ -41,7 +43,7 @@ public class TLAGroup
         var tla = _tlas.FirstOrDefault(t => t.Name.Equals(shortName));
         if (tla == null)
         {
-            throw new TLANameDoesNotExistException(shortName.Name);
+            throw new TLANameDoesNotExistException($"A TLA '{shortName.Name}' does not exist!");
         }
 
         tla.Accept();

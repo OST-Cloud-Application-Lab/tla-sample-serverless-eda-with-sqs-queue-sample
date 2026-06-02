@@ -17,6 +17,8 @@
 
     <ItemGroup>
       <PackageReference Include="Amazon.Lambda.APIGatewayEvents" Version="2.7.3" />
+      <PackageReference Include="Amazon.Lambda.Core" Version="2.8.1" />
+      <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.4.5" />
       <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.14" />
       <PackageReference Include="AWSSDK.EventBridge" Version="4.0.5.15" />
       <PackageReference Include="AWSSDK.SQS" Version="4.0.2.23" />
@@ -24,7 +26,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\TLAManager.Services\TLAManager.Services.csproj" />
+      <ProjectReference Include="..\TLAManager.Application\TLAManager.Application.csproj" />
     </ItemGroup>
 
 </Project>
