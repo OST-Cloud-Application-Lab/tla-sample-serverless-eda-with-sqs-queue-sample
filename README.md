@@ -20,6 +20,9 @@ It can easily be deployed on AWS.
 - [TLA Reports Microservice](#tla-reports-microservice)
   - [Build and Deploy](#build-and-deploy-2)
   - [Use Cases](#use-cases)
+- [Complete System Deployment](#complete-system-deployment)
+  - [CI/CD pipeline](#cicd-pipeline)
+  - [Manual Deployment via Shell Script](#manual-deployment-via-shell-script)
 - [Contributing](#contributing)
 - [Acknowledgements](#acknowledgements)
 - [License](#license)
@@ -30,26 +33,37 @@ The following diagram gives an architectural overview of the application:
 
 ![TLA Sample App - Implemented Serverless](./docs/images/architecture_overview.jpg)
 
+The application consists of the following microservices:
+
+- **TLA Resolver microservice** provides a public API for querying TLAS with an _ACCEPTED_ status.
+  It utilizes a dedicated DynamoDB table to serve public traffic independently from the _Manager microservice_.
+- **TLA Manager microservice** handles administrative commands, including the creation and approval of TLAs and groups.
+  It allows _PROPOSED_ TLAs to be transitioned to _ACCEPTED_ upon review.
+  Additionally, it serves as the interface for ordering PDF reports. It manages two DynamoDB tables to store TLA data and report states.
+- **TLA Reports microservice** generates PDF reports for _ACCEPTED_ TLAs.
+  It uses a backpressure mechanism to configure the number of concurrent workers, preventing over-scaling during high workloads.
+  Once a report is generated, it is stored in an S3 bucket and assigned a public URL.
+
 The application uses the following AWS services:
 
 - **Amazon API Gateway** serves the RESTful HTTP API to access TLAs.
 - **AWS Lambda** is used (one function per endpoint) to process the request events of the API gateway, load the data from a DynamoDB table and return a response event back to the gateway.
 - **Amazon DynamoDB** is used to persist the TLA's.
-- **Amazon EventBridge** routes events between the Manager, Reports, and Resolver microservices. (except for _report request messages_ sent from the Manager to the Reports microservice).
+- **Amazon EventBridge** routes events between the _Manager_, _Reports_, and _Resolver microservices_. (except for _report request messages_ sent from the Manager to the _Reports microservice_).
 - **Amazon S3** is used to save generated TLA reports.
-- **Amazon Simple Queue Service** is used as a message-queue for _report request messages_ sent from the Manager to the Reports microservice.
+- **Amazon Simple Queue Service** is used as a message-queue for _report request messages_ sent from the Manager to the _Reports microservice_.
 
 ## Used Technology
 
 The application uses the following tools and frameworks:
 
-- [Maven](https://maven.apache.org/) to build the Resolver microservice deployable (JAR)
-- [Spring Boot](https://spring.io/projects/spring-boot) and [Spring Cloud Function](https://spring.io/projects/spring-cloud-function) to implement the Resolver microservice functions.
-- The [AWS SDK for Java 2.x](https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/get-started.html) to connect the Resolver microservice functions to the DynamoDB and EventBridge.
-- [.NET](https://dotnet.microsoft.com/en-us/) to implement the Manager microservice functions.
+- [Maven](https://maven.apache.org/) to build the _Resolver microservice_ deployable (JAR)
+- [Spring Boot](https://spring.io/projects/spring-boot) and [Spring Cloud Function](https://spring.io/projects/spring-cloud-function) to implement the _Resolver microservice_ functions.
+- The [AWS SDK for Java 2.x](https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/get-started.html) to connect the _Resolver microservice_ functions to the DynamoDB and EventBridge.
+- [.NET](https://dotnet.microsoft.com/en-us/) to implement the _Manager microservice_ functions.
 - The [AWS SDK for .NET](https://docs.aws.amazon.com/sdk-for-net/v4/developer-guide/welcome.html) to connect the Manager functions to the DynamoDB and EventBridge.
-- [Python](https://www.python.org/) to implement the Reports microservice functions.
-- [AWS SDK for Python](https://docs.aws.amazon.com/boto3/latest/) to connect the Reports microservice functions to the S3 Bucket and EventBridge.
+- [Python](https://www.python.org/) to implement the _Reports microservice_ functions.
+- [AWS SDK for Python](https://docs.aws.amazon.com/boto3/latest/) to connect the _Reports microservice_ functions to the S3 Bucket and EventBridge.
 - The [Serverless Framework](https://www.serverless.com/) to deploy the whole application on AWS.
   - Including the definition of the API endpoints, the DynamoDB table and the EventBridge.
 - [GitLab CI/CD Pipelines](https://github.com/OST-Cloud-Application-Lab/tla-sample-serverless-eda-dotnet-java/actions) as CI/CD tool to automatically deploy the application to AWS.
@@ -60,7 +74,7 @@ The following diagram shows a more detailed architectural overview:
 
 ## Infrastructure
 
-The "TLA Manager", "TLA Resolver" and "TLA Reports" microservices communicate through events that are sent to an Amazon EventBridge and Amazon Simple Queue Service (SQS).
+The _Manager_, _Resolver_ and _Reports_ microservices communicate through events that are sent to an Amazon EventBridge and Amazon Simple Queue Service (SQS).
 This infrastructure needs to be deployed before the other services, using the following commands:
 
 ```bash
@@ -73,12 +87,12 @@ sls deploy
 This section documents the different types of events routed by the EventBridge.
 
 The general format of EventBridge events is documented in the [Amazon documentation](https://docs.aws.amazon.com/eventbridge/latest/ref/overiew-event-structure.html).
-All events use the "detail-type" to differentiate between the different types of events.
+All events use the `detail-type` to differentiate between the different types of events.
 
 #### TLA Accepted Event
 
-When accepting a TLA (see [Accept a Proposed TLA](#accept-a-proposed-tla)) the "TLA Manager" sends an event to the EventBridge.
-The event includes the necessary information for the "TLA Resolver" to add the accepted TLA to its database.
+When accepting a TLA (see [Accept a Proposed TLA](#accept-a-proposed-tla)) the _Manager microservice_ sends an event to the EventBridge.
+The event includes the necessary information for the _Resolver microservice_ to add the accepted TLA to its database.
 The event has a `detail-type` of `TLA_Accepted`.
 
 The `detail` of the event has the following `data` format:
@@ -135,8 +149,8 @@ Here, an example of an actual event:
 
 #### TLA Report Changed Event
 
-When the status of a TLA report changes, the "TLA Reports" sends an event to the EventBridge.
-The event includes the necessary information for the "TLA Manager" to update the report status in its database.
+When the status of a TLA report changes, the _Reports microservice_ sends an event to the EventBridge.
+The event includes the necessary information for the _Manager microservice_ to update the report status in its database.
 The event has a `detail-type` of `TLAReport_Changed`.
 
 The `detail` of the event has the following `data` format:
@@ -196,8 +210,8 @@ Another common approach for implementing backpressure is to use the `reservedCon
 
 #### TLA Report Request Message
 
-When a TLA report is requested the "TLA Manager" sends a message into the SQS.
-The message includes all the necessary information for the "TLA Reports" to generate the requested report.
+When a TLA report is requested the _Manager microservice_ sends a message into the SQS.
+The message includes all the necessary information for the _Reports microservice_ to generate the requested report.
 The body contains the same structure as the previous described structures of the event types.
 
 ```json
@@ -254,19 +268,19 @@ sls deploy
 
 _Note:_ `sls deploy` only works if the serverless framework is already set up locally, including logging in and connecting to the AWS account. See the [Serverless Framework documentation](https://www.serverless.com/framework/docs/getting-started) for more information on how to do this.
 
-Once `sls deploy` was successful, the DynamoDB table can be filled with some sample data by executing the `seedDatabase` function.
+Once `sls deploy` was successful, the DynamoDB table can be filled with sample data by executing the `seedDatabase` function.
 
 ```bash
 sls invoke --function seedDatabase --data 'unused'
 ```
 
-Now the "TLA Manager" endpoints can be accessed.
+Now the _Manager microservice_ endpoints can be accessed.
 
 ### Use Cases and Endpoints
 
 The Manager currently supports the following use cases, for which sample CURLs were provided.
 
-_Disclaimer:_ Please note that no identity and access control measures were implemented for this sample application yet. All endpoints are publicly available.
+_Disclaimer:_ Please note that this sample application does not yet include identity or access control measures. All endpoints are publicly available.
 
 _Note_ that the `{baseUrl}` must be replaced with the URLs provided from `sls deploy` in all the following examples.
 
@@ -348,7 +362,7 @@ The `/tlas` (GET) endpoint returns all TLAs of all TLA groups that are in the `A
 ```
 
 Note that the endpoint returns all TLAs in state `ACCEPTED` by default.
-Use the query parameter `status` with the value `PROPOSED` to list TLAs in the `PROPOSED` state (see example below under "Query Proposed TLAs").
+Use the query parameter `status` with the value `PROPOSED` to list TLAs in the `PROPOSED` state (see example below under [Query Proposed TLAs](#query-proposed-tlas)).
 
 #### Create new TLA Group
 
@@ -388,7 +402,7 @@ curl --header "Content-Type: application/json" \
 }
 ```
 
-Note that the new TLA is now in state `PROPOSED` and not delivered by the endpoints mentioned above. They only return TLAs in state `ACCEPTED` by default. Use the following endpoint ("Accept a Proposed TLA") to accept a proposed TLA.
+Note that the new TLA is now in state `PROPOSED` and not delivered by the endpoints mentioned above. They only return TLAs in state `ACCEPTED` by default. Use the endpoint [Accept a Proposed TLA](#accept-a-proposed-tla) to accept a proposed TLA.
 
 #### Add New TLA to Existing Group
 
@@ -424,7 +438,7 @@ curl --header "Content-Type: application/json" \
 }
 ```
 
-Note that the new TLA is now in state `PROPOSED` and not delivered by the endpoints mentioned above. They only return TLAs in state `ACCEPTED` by default. Use the following endpoint ("Accept a Proposed TLA") to accept a proposed TLA.
+Note that the new TLA is now in state `PROPOSED` and not delivered by the endpoints mentioned above. They only return TLAs in state `ACCEPTED` by default. Use the endpoint [Accept a Proposed TLA](#accept-a-proposed-tla) to accept a proposed TLA.
 
 #### Query Proposed TLAs
 
@@ -457,7 +471,7 @@ The endpoint `/tlas` (GET) offers a query parameter to list all TLAs in the `PRO
 
 #### Accept a Proposed TLA
 
-With the endpoint `/tlas/{groupName}/{name}/accept` (PUT) a TLA ("name") within a group ("groupName") can be accepted.
+With the endpoint `/tlas/{groupName}/{name}/accept` (PUT) a TLA (`name`) within a group (`groupName`) can be accepted.
 This is a so-called [state transition operation](https://microservice-api-patterns.org/patterns/responsibility/operationResponsibilities/StateTransitionOperation).
 
 **Sample CURL**: `curl -X PUT {baseUrl}/tlas/FIN/ROI/accept` (puts the TLA 'ROI' in group 'FIN' into state `ACCEPTED`)
@@ -466,7 +480,7 @@ This endpoint does not expect a body (JSON) and does also not return one. The co
 
 Once the TLA is accepted, the query endpoints listed above (such as `/tlas` or `/tlas/{groupName}`) will now list them.
 
-Acceptance of a TLA sends an [Accept TLA Event](#accept-tla-event) to the "TLA Resolver" to add the TLA (and possibly also a new group) to its database.
+Acceptance of a TLA sends an [Accept TLA Event](#accept-tla-event) to the _Resolver microservice_ to add the TLA (and possibly also a new group) to its database.
 After this event is handled by the Resolver, the query endpoints of the Resolver will also list this TLA.
 
 #### Create a TLA Report
@@ -496,7 +510,7 @@ curl --header "Content-Type: application/json" \
 
 #### Get Status of a TLA Report
 
-With the `/reports/{id}` (GET) endpoint the status of a report can be requested.
+With the `/reports/{id}` (GET) endpoint, the status of a report can be requested.
 
 **Sample CURL**:
 
@@ -545,19 +559,19 @@ sls deploy
 
 _Note:_ `sls deploy` only works if the serverless framework is already set up locally, including logging in and connecting to the AWS account. See the [Serverless Framework documentation](https://www.serverless.com/framework/docs/getting-started) for more information on how to do this.
 
-Once `sls deploy` was successful, the DynamoDB table can be filled with some sample data by executing the `seedDatabase` function.
+Once `sls deploy` was successful, the DynamoDB table can be filled with sample data by executing the `seedDatabase` function.
 
 ```bash
 sls invoke --function seedDatabase --data 'unused'
 ```
 
-Now the "TLA Resolver" endpoints can be accessed.
+Now the _Resolver microservice_ endpoints can be accessed.
 
 ### Use Cases and Endpoints
 
 The Resolver currently supports the following use cases, for which sample CURLs were provided.
 
-_Disclaimer:_ Please note that no identity and access control measures were implemented for this sample application yet. All endpoints are publicly available.
+_Disclaimer:_ Please note that this sample application does not yet include identity or access control measures. All endpoints are publicly available.
 
 _Note_ that the `{baseUrl}` must be replaced with the URLs provided from `sls deploy` in all the following examples.
 
@@ -567,8 +581,8 @@ _Note_ that the `{baseUrl}` must be replaced with the URLs provided from `sls de
 | /tlas/{groupName} | GET    | Get all TLAs of a specific group.                                                                                      |
 | /tlas/all/{name}  | GET    | Search for a TLA over all groups. This query can return multiple TLAs as a single TLA is only unique within one group. |
 
-The Resolver only lists TLA that have been accepted in the "TLA Manager".
-To add a new TLA to the Resolver, see the [Accept a Proposed TLA](#accept-a-proposed-tla) API of the "TLA Manager".
+The Resolver only lists TLAs that have been accepted in the _Manager microservice_.
+To add a new TLA to the Resolver, see the [Accept a Proposed TLA](#accept-a-proposed-tla) API of the _Manager microservice_.
 
 #### Get All TLA Groups
 
@@ -681,7 +695,7 @@ The endpoint `/tlas/{groupName}` (GET) returns all TLAs of a specific group.
 
 #### Search TLA in All Groups
 
-With the endpoint `/tlas/all/{name}` (GET) a TLA can be searched through all groups. Note that this might return multiple results, as TLAs are only unique within one group.
+With the endpoint `/tlas/all/{name}` (GET) a TLA can be searched across all groups. Note that this might return multiple results, as TLAs are only unique within one group.
 
 **Sample CURL**: `curl -X GET {baseUrl}/tlas/all/ACL`
 
@@ -707,7 +721,7 @@ With the endpoint `/tlas/all/{name}` (GET) a TLA can be searched through all gro
 
 ### Build and Deploy
 
-The Reports microservice is implemented in Python and is deployed with the Serverless Framework.
+The _Reports microservice_ is implemented in Python and is deployed with the Serverless Framework.
 
 ```bash
 cd reports
@@ -720,9 +734,9 @@ _Note:_ `sls deploy` only works if the serverless framework is already set up lo
 
 ### Use Cases
 
-The "TLA Reports" microservice can not be directly accessed via restful HTTP endpoints, instead it receives messages from the "TLA Manager" microservice via the SQS and sends events to the EventBridge to inform the Manager about the status of the report. For more information on the communication between the Manager and Reports microservice, see the [Infrastructure](#infrastructure) section.
+The _Reports microservice_ can not be directly accessed via restful HTTP endpoints, instead it receives messages from the _Manager microservice_ via the SQS and sends events to the EventBridge to inform the _Manager microservice_ about the status of the report. For more information on the communication between the _Manager_ and _Reports microservices_, see the [Infrastructure](#infrastructure) section.
 
-To request the generation or check the status of a new report, the `/reports` endpoint of the "TLA Manager" can be used (see [Create a TLA Report](#create-a-tla-report) and [Get Status of a TLA Report](#get-status-of-a-tla-report)).
+To request the generation or check the status of a new report, the `/reports` endpoint of the _Manager microservice_ can be used (see [Create a TLA Report](#create-a-tla-report) and [Get Status of a TLA Report](#get-status-of-a-tla-report)).
 
 [↑ Back to Table of Contents](#table-of-contents)
 
