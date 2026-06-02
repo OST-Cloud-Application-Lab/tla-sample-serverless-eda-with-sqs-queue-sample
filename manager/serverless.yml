@@ -11,6 +11,7 @@ provider:
     lambda: true
   environment:
     TLA_TABLE_NAME: tla-manager-table-dev
+    TLA_REPORT_TABLE_NAME: tla-report-table-dev
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -24,6 +25,7 @@ provider:
         - dynamodb:DescribeTable
       Resource:
         - !GetAtt TLADynamoDBTable.Arn
+        - !GetAtt TLAReportTable.Arn
     - Effect: Allow
       Action:
         - events:PutEvents
@@ -46,6 +48,17 @@ resources:
           - AttributeName: "name"
             KeyType: "HASH"
         TableName: ${self:provider.environment.TLA_TABLE_NAME}
+    TLAReportTable:
+      Type: "AWS::DynamoDB::Table"
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+        TableName: ${self:provider.environment.TLA_REPORT_TABLE_NAME}
 
 functions:
   readAllTlaGroups:
@@ -72,6 +85,18 @@ functions:
       - httpApi:
           path: /tlas/{groupName}/{name}/accept
           method: put
+  createReport:
+    handler: TLAManager.Infrastructure::TLAManager.Infrastructure.WebApi.Functions.CreateTLAReportFunction::CreateTLAReportAsync
+    events:
+      - httpApi:
+          path: /reports
+          method: post
+  report:
+    handler: TLAManager.Infrastructure::TLAManager.Infrastructure.WebApi.Functions.TLAReportFunction::TLAReportAsync
+    events:
+      - httpApi:
+          path: /reports/{id}
+          method: get
+
   seedDatabase:
     handler: TLAManager.Infrastructure::TLAManager.Infrastructure.Migration.DatabaseSeedHandler::SeedAsync
-  

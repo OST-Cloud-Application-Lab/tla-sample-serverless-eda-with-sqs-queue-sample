@@ -1,5 +1,5 @@
-using TLAManager.Domain;
 using Amazon.DynamoDBv2.Model;
+using TLAManager.Domain;
 
 namespace TLAManager.Infrastructure.Persistence;
 

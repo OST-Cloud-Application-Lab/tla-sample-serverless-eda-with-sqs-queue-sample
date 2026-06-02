@@ -46,3 +46,5 @@ bin/
 obj/
 /**/*.DotSettings*
 /**/*.DotSettings
+
+**/.vs/*

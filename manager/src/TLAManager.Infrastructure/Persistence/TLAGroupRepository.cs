@@ -2,7 +2,7 @@ using TLAManager.Domain;
 
 namespace TLAManager.Infrastructure.Persistence;
 
-public class TLAGroupRepository(DynamoDbThreeLetterAbbreviationRepository repository) : ITLAGroupRepository
+public class TLAGroupRepository(DynamoDbTLARepository repository) : ITLAGroupRepository
 {
     public async Task<TLAGroup> SaveAsync(TLAGroup group)
     {

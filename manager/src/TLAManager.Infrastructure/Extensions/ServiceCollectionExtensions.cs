@@ -11,7 +11,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
         services.AddTransient<ITLAGroupRepository, TLAGroupRepository>();
-        services.AddTransient<DynamoDbThreeLetterAbbreviationRepository>();
+        services.AddTransient<DynamoDbTLARepository>();
         services.AddTransient<ResponseFactory>();
         services.AddTransient<AmazonEventBridgeClient>();
         return services;

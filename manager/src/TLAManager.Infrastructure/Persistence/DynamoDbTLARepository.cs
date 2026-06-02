@@ -4,7 +4,7 @@ using TLAManager.Domain;
 
 namespace TLAManager.Infrastructure.Persistence;
 
-public class DynamoDbThreeLetterAbbreviationRepository
+public class DynamoDbTLARepository
 {
     private readonly IAmazonDynamoDB _client = new AmazonDynamoDBClient();
 

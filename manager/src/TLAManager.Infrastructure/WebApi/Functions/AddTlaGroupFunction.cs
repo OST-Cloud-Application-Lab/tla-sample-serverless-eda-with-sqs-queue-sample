@@ -23,8 +23,8 @@ public class AddTlaGroupFunction : FunctionBase
         try
         {
             var dto = JsonSerializer.Deserialize<TLAGroupDto>(request.Body, JsonOptions.SerializerOptions)!;
-            var tlaGroup = await service.AddTlaGroupAsync(TlaApiDtoMapper.CreateTlaGroupFromDto(dto));
-            var tlaGroupDto = TlaApiDtoMapper.TlaGroupToDto(tlaGroup);
+            var tlaGroup = await service.AddTlaGroupAsync(TLAApiDtoMapper.CreateTlaGroupFromDto(dto));
+            var tlaGroupDto = TLAApiDtoMapper.TlaGroupToDto(tlaGroup);
             return responseFactory.CreateResponse(tlaGroupDto, HttpStatusCode.Created);
         }
         catch (TLAGroupNameAlreadyExistsException e)

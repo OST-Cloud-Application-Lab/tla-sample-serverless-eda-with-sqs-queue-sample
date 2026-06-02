@@ -1,7 +1,7 @@
-using System.Net;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Microsoft.Extensions.DependencyInjection;
+using System.Net;
 using TLAManager.Domain;
 using TLAManager.Infrastructure.WebApi.Mappers;
 using TLAManager.Services;
@@ -31,7 +31,7 @@ public class GetAllTlaGroupsFunction : FunctionBase
 
             var allGroups = await service.FindAllTlaGroupsAsync(status);
             var tlaGroupDtos = allGroups
-                .Select(TlaApiDtoMapper.TlaGroupToDto)
+                .Select(TLAApiDtoMapper.TlaGroupToDto)
                 .ToList();
 
             context.Logger.LogInformation($"{nameof(GetAllTlaGroupsFunction)} returning {tlaGroupDtos.Count} TLA groups");

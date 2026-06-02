@@ -11,9 +11,9 @@ public class ThreeLetterAbbreviation : IComparable<ThreeLetterAbbreviation>
 
     private readonly HashSet<string> _alternativeMeanings;
     public ImmutableHashSet<string> AlternativeMeanings => _alternativeMeanings.ToImmutableHashSet();
-    
+
     private readonly Uri? _uri;
-    
+
     public TLAStatus Status { get; private set; }
 
     public ThreeLetterAbbreviation(ShortName name, string meaning, IEnumerable<string> alternativeMeanings, string? link, TLAStatus status)

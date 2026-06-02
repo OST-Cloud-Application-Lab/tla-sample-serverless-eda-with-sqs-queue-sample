@@ -1,11 +1,10 @@
-using System.Net;
-using System.Text.Json;
 using Amazon.EventBridge;
 using Amazon.EventBridge.Model;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
-using Amazon.Runtime.Internal.Util;
 using Microsoft.Extensions.DependencyInjection;
+using System.Net;
+using System.Text.Json;
 using TLAManager.Domain;
 using TLAManager.Domain.Exceptions;
 using TLAManager.Infrastructure.WebApi.Events;
@@ -22,7 +21,7 @@ public class AcceptTlaFunction : FunctionBase
     public async Task<APIGatewayProxyResponse> AcceptTlaAsync(APIGatewayProxyRequest request, ILambdaContext context)
     {
         context.Logger.LogInformation($"{nameof(AcceptTlaFunction)} called");
-        
+
         using var scope = ServiceProvider.CreateScope();
         var service = scope.ServiceProvider.GetService<ITlaGroupsApplicationService>()!;
         var responseFactory = scope.ServiceProvider.GetService<ResponseFactory>()!;
