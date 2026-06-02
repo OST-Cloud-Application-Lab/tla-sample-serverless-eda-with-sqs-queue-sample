@@ -67,6 +67,30 @@ resources:
           - AttributeName: "id"
             KeyType: "HASH"
         TableName: ${self:provider.environment.TLA_REPORT_TABLE_NAME}
+    UpdateReportRule:
+      Type: AWS::Events::Rule
+      Properties:
+        EventBusName: ${cf:tla-infrastructure-serverless-${sls:stage}.TLAEventBusName}
+        EventPattern:
+          source:
+            - tla-reports
+          detail-type:
+            - TLAReport_Changed
+        Name: update-report-rule-${sls:stage}
+        Targets:
+          - Arn: !GetAtt
+              - UpdateReportLambdaFunction
+              - Arn
+            Id: update_report
+    PermissionInvokeLambda:
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName: !Ref "UpdateReportLambdaFunction"
+        Action: "lambda:InvokeFunction"
+        Principal: "events.amazonaws.com"
+        SourceArn: !GetAtt
+          - "UpdateReportRule"
+          - "Arn"
 
 functions:
   readAllTlaGroups:
@@ -107,19 +131,6 @@ functions:
           method: get
   updateReport:
     handler: TLAManager.Infrastructure::TLAManager.Infrastructure.WebApi.Functions.UpdateTLAReportFunction::HandleTLAReportChangedEventAsync
-    events:
-      - eventBridge:
-          eventBus: ${cf:tla-infrastructure-serverless-${sls:stage}.TLAEventBusArn}
-          pattern:
-            source:
-              - tla-reports
-            detail-type:
-              - TLAReport_Changed
-            detail:
-              metadata:
-                domain:
-                  event:
-                    - TLAReport_Changed
 
   seedDatabase:
     handler: TLAManager.Infrastructure::TLAManager.Infrastructure.Migration.DatabaseSeedHandler::SeedAsync

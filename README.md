@@ -4,50 +4,73 @@
 
 This repository implements the [Three Letter Abbreviations (TLA) Sample Application](https://github.com/ContextMapper/ddd-cm-tla-sample-application) of the [Context Mapper](https://contextmapper.org) project with serverless technology.
 It can easily be deployed on AWS.
-The following graphic gives an architecture overview of the app:
+
+## Table of Contents
+
+- [Used Technology](#used-technology)
+- [Infrastructure](#infrastructure)
+  - [EventBridge - Event Types](#eventbridge---event-types)
+  - [Simple Queue Service - Message Types](#simple-queue-service---message-types)
+- [TLA Manager Microservice](#tla-manager-microservice)
+  - [Build and Deploy](#build-and-deploy)
+  - [Use Cases and Endpoints](#use-cases-and-endpoints)
+- [TLA Resolver Microservice](#tla-resolver-microservice)
+  - [Build and Deploy](#build-and-deploy-1)
+  - [Use Cases and Endpoints](#use-cases-and-endpoints-1)
+- [TLA Reports Microservice](#tla-reports-microservice)
+  - [Build and Deploy](#build-and-deploy-2)
+  - [Use Cases](#use-cases)
+- [Contributing](#contributing)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
+
+---
+
+The following diagram gives an architectural overview of the application:
 
 ![TLA Sample App - Implemented Serverless](./docs/images/architecture_overview.jpg)
 
-The app uses the following AWS services:
+The application uses the following AWS services:
 
-- **Amazon API Gateway** now serves the RESTful HTTP API to access the TLA's.
+- **Amazon API Gateway** serves the RESTful HTTP API to access TLAs.
 - **AWS Lambda** is used (one function per endpoint) to process the request events of the API gateway, load the data from a DynamoDB table and return a response event back to the gateway.
 - **Amazon DynamoDB** is used to persist the TLA's.
-- **Amazon EventBridge** is used to send events from the manager to the resolver.
+- **Amazon EventBridge** routes events between the Manager, Reports, and Resolver microservices. (except for _report request messages_ sent from the Manager to the Reports microservice).
 - **Amazon S3** is used to save generated TLA reports.
-- **Amazon Simple Queue Service** is used to send events from the manager to the report generator.
+- **Amazon Simple Queue Service** is used as a message-queue for _report request messages_ sent from the Manager to the Reports microservice.
 
 ## Used Technology
 
-The app uses the following tools and frameworks:
+The application uses the following tools and frameworks:
 
-- [Maven](https://maven.apache.org/) to build the resolver app deployable (JAR)
-- [Spring Boot](https://spring.io/projects/spring-boot) and [Spring Cloud Function](https://spring.io/projects/spring-cloud-function) to implement the resolver functions.
-- The [AWS SDK for Java 2.x](https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/get-started.html) to connect the resolver functions to the DynamoDB and EventBridge.
-- [.NET](https://dotnet.microsoft.com/en-us/) to implement the manager functions.
-- [Python](https://www.python.org/) to implement the report generator functions.
-- The [AWS SDK for .NET](https://docs.aws.amazon.com/sdk-for-net/v4/developer-guide/welcome.html) to connect the manager functions to the DynamoDB and EventBridge.
+- [Maven](https://maven.apache.org/) to build the Resolver microservice deployable (JAR)
+- [Spring Boot](https://spring.io/projects/spring-boot) and [Spring Cloud Function](https://spring.io/projects/spring-cloud-function) to implement the Resolver microservice functions.
+- The [AWS SDK for Java 2.x](https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/get-started.html) to connect the Resolver microservice functions to the DynamoDB and EventBridge.
+- [.NET](https://dotnet.microsoft.com/en-us/) to implement the Manager microservice functions.
+- The [AWS SDK for .NET](https://docs.aws.amazon.com/sdk-for-net/v4/developer-guide/welcome.html) to connect the Manager functions to the DynamoDB and EventBridge.
+- [Python](https://www.python.org/) to implement the Reports microservice functions.
+- [AWS SDK for Python](https://docs.aws.amazon.com/boto3/latest/) to connect the Reports microservice functions to the S3 Bucket and EventBridge.
 - The [Serverless Framework](https://www.serverless.com/) to deploy the whole application on AWS.
   - Including the definition of the API endpoints, the DynamoDB table and the EventBridge.
-- [GitLab CI/CD Pipelines](https://github.com/OST-Cloud-Application-Lab/tla-sample-serverless-eda-dotnet-java/actions) as CI/CD tool to automatically deploy the app to AWS.
+- [GitLab CI/CD Pipelines](https://github.com/OST-Cloud-Application-Lab/tla-sample-serverless-eda-dotnet-java/actions) as CI/CD tool to automatically deploy the application to AWS.
 
-The following graphic shows a more detailed architecture overview:
+The following diagram shows a more detailed architectural overview:
 
 ![TLA Sample App - Implemented Serverless](./docs/images/architecture_detail.jpg)
 
 ## Infrastructure
 
-The "TLA Manager", "TLA Resolver" and "TLA Reports" communicate through events that are sent to an Amazon EventBridge and Amazon Simple Queue Service.
+The "TLA Manager", "TLA Resolver" and "TLA Reports" microservices communicate through events that are sent to an Amazon EventBridge and Amazon Simple Queue Service (SQS).
 This infrastructure needs to be deployed before the other services, using the following commands:
 
 ```bash
 cd infrastructure
-serverless deploy
+sls deploy
 ```
 
-### Event Types
+### EventBridge - Event Types
 
-This section documents the different types of events.
+This section documents the different types of events routed by the EventBridge.
 
 The general format of EventBridge events is documented in the [Amazon documentation](https://docs.aws.amazon.com/eventbridge/latest/ref/overiew-event-structure.html).
 All events use the "detail-type" to differentiate between the different types of events.
@@ -112,7 +135,7 @@ Here, an example of an actual event:
 
 #### TLA Report Changed Event
 
-When the status of a TLA report changes, the "TLA Reports" sends and event to the EventBridge.
+When the status of a TLA report changes, the "TLA Reports" sends an event to the EventBridge.
 The event includes the necessary information for the "TLA Manager" to update the report status in its database.
 The event has a `detail-type` of `TLAReport_Changed`.
 
@@ -159,17 +182,23 @@ Here, an example of an actual event:
 }
 ```
 
-### Queue Message Types
+### Simple Queue Service - Message Types
 
-This section documents the queue message type.
+This section documents the SQS message type.
 
-In the [Amazon documentation](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html) is described how to use lambdas with Amazon SQS.
+The [Amazon documentation](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html) describes how to integrate lambdas with Amazon SQS.
+
+The SQS is used instead of the EventBridge for _report request messages_ because it provides message buffering capabilities as it can be used as a FIFO (First-In-First-Out) queue. Additionally, SQS allows control over message pulling by workers through the `maximumConcurrency` configuration parameter, which determines how many concurrent workers can process messages from the queue. Note that this value cannot be smaller than 2.
+
+For scenarios requiring single-worker processing, the [MessageGroupId attribute](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/using-messagegroupid-property.html) can be utilized: by assigning the same MessageGroupId to all messages, FIFO queues guarantee that only one worker processes messages in sequence, effectively enforcing single-threaded message processing.
+
+Another common approach for implementing backpressure is to use the `reservedConcurrency` setting of a Lambda function to limit the total number of concurrent executions. However, it cannot be applied due to account-level quota limitations.
 
 #### TLA Report Request Message
 
-When a TLA report is requested the "TLA Manager" sends a message into the simple queue service.
+When a TLA report is requested the "TLA Manager" sends a message into the SQS.
 The message includes all the necessary information for the "TLA Reports" to generate the requested report.
-The body contains the same structure as the previous described structures of the event types
+The body contains the same structure as the previous described structures of the event types.
 
 ```json
 "Records": [
@@ -193,50 +222,53 @@ The body contains the same structure as the previous described structures of the
 ]
 ```
 
-Here, an example of the `body` of an actual event:
+An example of the `body` of an actual event:
 
 ```json
 "body": "{\n  \"metadata\": {\n    \"version\": \"1.0\",\n    \"created_at\": \"4/5/2026 6:31:46 PM\",\n    \"domain\": {\n      \"name\": \"TLAs\",\n      \"subdomain\": \"report_generation\",\n      \"service\": \"TLAManager\",\n      \"category\": \"domain_event\",\n      \"event\": \"TLAReport_Requested\"\n    }\n  },\n  \"data\": {\n    \"reportId\": \"4fd19fe5-0ff6-48cb-b287-8610988d5cfb\",\n    \"tlaGroups\": [\n      {\n        \"name\": \"DDD\",\n        \"description\": \"Domain-Driven Design\",\n        \"tlAs\": [\n          {\n            \"name\": \"ACL\",\n            \"meaning\": \"Anticorruption Layer\",\n            \"alternativeMeanings\": [],\n            \"status\": \"Accepted\",\n            \"link\": null\n          },\n          {\n            \"name\": \"CF\",\n            \"meaning\": \"Conformist\",\n            \"alternativeMeanings\": [],\n            \"status\": \"Accepted\",\n            \"link\": null\n          },\n          {\n            \"name\": \"OHS\",\n            \"meaning\": \"Open Host Service\",\n            \"alternativeMeanings\": [],\n            \"status\": \"Accepted\",\n            \"link\": null\n          },\n          {\n            \"name\": \"PL\",\n            \"meaning\": \"Published Language\",\n            \"alternativeMeanings\": [],\n            \"status\": \"Accepted\",\n            \"link\": null\n          },\n          {\n            \"name\": \"SK\",\n            \"meaning\": \"Shared Kernel\",\n            \"alternativeMeanings\": [],\n            \"status\": \"Accepted\",\n            \"link\": null\n          }\n        ]\n      }\n    ]\n  }\n}"
 ```
 
-## TLA Manager
+[↑ Back to Table of Contents](#table-of-contents)
+
+## TLA Manager Microservice
 
 ### Build and Deploy
 
-As a prerequisite, you must have the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download) and the [serverless CLI](https://www.serverless.com/framework/docs/getting-started) installed.
+As a prerequisite, the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download) and the [serverless CLI](https://www.serverless.com/framework/docs/getting-started) must be installed.
 
-Building the app is done using the dotnet CLI.
-We provide a build script which executes the necessary commands for you:
+Building the application is done using the dotnet CLI.
+
+The build script `.build.sh` executes all the necessary commands:
 
 ```bash
 cd manager
 ./.build.sh
 ```
 
-The command above creates a zip file `bin/release/net10.0/deploy-package.zip` which contains all the functions (lambdas) of the app.
-Once successfully built, the app is easily deployed with:
+The command above creates a zip file `bin/release/net10.0/deploy-package.zip` which contains all the functions (Lambdas) of the application.
+Once successfully built, the application is easily deployed with:
 
 ```bash
-serverless deploy
+sls deploy
 ```
 
-_Note:_ `serverless deploy` only works if you have already set up the serverless framework locally, including logging in and connecting to your AWS account. See the [Serverless Framework documentation](https://www.serverless.com/framework/docs/getting-started) for more information on how to do this.
+_Note:_ `sls deploy` only works if the serverless framework is already set up locally, including logging in and connecting to the AWS account. See the [Serverless Framework documentation](https://www.serverless.com/framework/docs/getting-started) for more information on how to do this.
 
-Once `serverless deploy` was successful, you can fill the DynamoDB table with some sample data by executing our `seedDatabase` function. You can do this via the following command:
+Once `sls deploy` was successful, the DynamoDB table can be filled with some sample data by executing the `seedDatabase` function.
 
 ```bash
 sls invoke --function seedDatabase --data 'unused'
 ```
 
-Now you can access the TLA's via the apps API.
+Now the "TLA Manager" endpoints can be accessed.
 
 ### Use Cases and Endpoints
 
-The manager currently supports the following use cases, for which we provide some sample CURLs.
+The Manager currently supports the following use cases, for which sample CURLs were provided.
 
-_Disclaimer:_ Please note that we have not implemented any identity and access control measures for this sample application. All endpoints are publicly available; including the writing ones (commands).
+_Disclaimer:_ Please note that no identity and access control measures were implemented for this sample application yet. All endpoints are publicly available.
 
-_Note_ that you will need to replace `{baseUrl}` with the URLs you get from `sls deploy` in all the following examples.
+_Note_ that the `{baseUrl}` must be replaced with the URLs provided from `sls deploy` in all the following examples.
 
 | Endpoint                        | Method | Description                                                                                                                                                                                   |
 | ------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -246,7 +278,7 @@ _Note_ that you will need to replace `{baseUrl}` with the URLs you get from `sls
 | /tlas/{groupName}               | POST   | Create a new TLA within an existing group (see sample payload below). The created TLA will be in PROPOSED state.                                                                              |
 | /tlas/{groupName}/{name}/accept | PUT    | Accept a proposed TLA ([state transition operation](https://microservice-api-patterns.org/patterns/responsibility/operationResponsibilities/StateTransitionOperation): PROPOSED -> ACCEPTED). |
 | /reports                        | POST   | Create a new TLA report (see sample payload below). Containing groups will be included in the generated report                                                                                |
-| /reports{id}                    | GET    | Get the status of the TLA report. Either the status when report not generated yet, or the url to the report.                                                                                  |
+| /reports/{id}                   | GET    | Get the status of the TLA report. Either the status when report not generated yet, or the url to the report.                                                                                  |
 
 #### Get All TLA Groups
 
@@ -320,7 +352,7 @@ Use the query parameter `status` with the value `PROPOSED` to list TLAs in the `
 
 #### Create new TLA Group
 
-Via `/tlas` (POST) you can create a new TLA group.
+Via `/tlas` (POST) a new TLA group can be created.
 
 **Sample CURL 1 (without containing TLA)**:
 
@@ -360,7 +392,7 @@ Note that the new TLA is now in state `PROPOSED` and not delivered by the endpoi
 
 #### Add New TLA to Existing Group
 
-With the endpoint `/tlas/{groupName}` (POST) you can add a new TLA to an existing group.
+With the endpoint `/tlas/{groupName}` (POST) a new TLA can be added to an existing group.
 
 **Sample CURL**:
 
@@ -425,7 +457,7 @@ The endpoint `/tlas` (GET) offers a query parameter to list all TLAs in the `PRO
 
 #### Accept a Proposed TLA
 
-With the endpoint `/tlas/{groupName}/{name}/accept` (PUT) you can accept a TLA ("name") within a group ("groupName").
+With the endpoint `/tlas/{groupName}/{name}/accept` (PUT) a TLA ("name") within a group ("groupName") can be accepted.
 This is a so-called [state transition operation](https://microservice-api-patterns.org/patterns/responsibility/operationResponsibilities/StateTransitionOperation).
 
 **Sample CURL**: `curl -X PUT {baseUrl}/tlas/FIN/ROI/accept` (puts the TLA 'ROI' in group 'FIN' into state `ACCEPTED`)
@@ -435,13 +467,13 @@ This endpoint does not expect a body (JSON) and does also not return one. The co
 Once the TLA is accepted, the query endpoints listed above (such as `/tlas` or `/tlas/{groupName}`) will now list them.
 
 Acceptance of a TLA sends an [Accept TLA Event](#accept-tla-event) to the "TLA Resolver" to add the TLA (and possibly also a new group) to its database.
-After this event is handled by the resolver, the query endpoints of the resolver will also list this TLA.
+After this event is handled by the Resolver, the query endpoints of the Resolver will also list this TLA.
 
 #### Create a TLA Report
 
-With the `/reports` (POST) endpoint you can request the creation of a new report.
-The TLA groups to be included in the report must be specified in the request body.
-If omitted, all `ACCEPTED` groups will be included by default.
+With the `/reports` (POST) endpoint, the creation of new reports containing `ACCEPTED` TLAs can be requested.
+TLA group names of groups to be included in the report can be specified in the request body.
+If no TLA groups are specified in the request body, TLAs from all groups will be included in the report.
 
 **Sample CURL**:
 
@@ -464,12 +496,12 @@ curl --header "Content-Type: application/json" \
 
 #### Get Status of a TLA Report
 
-With the `/reports/{id}` (GET) endpoint you can request the status of a report.
+With the `/reports/{id}` (GET) endpoint the status of a report can be requested.
 
 **Sample CURL**:
 
 ```bash
-curl -X GET {baseUrl}/reports9c...ad
+curl -X GET {baseUrl}/reports/9c...ad
 ```
 
 **Sample output:** (report creation is running)
@@ -492,40 +524,42 @@ curl -X GET {baseUrl}/reports9c...ad
 }
 ```
 
-## TLA Resolver
+[↑ Back to Table of Contents](#table-of-contents)
 
-### Build and Deploy Resolver
+## TLA Resolver Microservice
 
-Building the app and its JAR file is done with Maven:
+### Build and Deploy
+
+Building the application and its JAR file is done with Maven:
 
 ```bash
 cd resolver
 ./mvnw clean package
 ```
 
-The command above creates a JAR file `target\tla-resolver-serverless-1.2-SNAPSHOT-aws.jar` which contains all the functions (lambdas) of the app. Once successfully built, the app is easily deployed with:
+The command above creates a JAR file `target\tla-resolver-serverless-1.2-SNAPSHOT-aws.jar` which contains all the functions (lambdas) of the app. Once successfully built, the application is easily deployed with:
 
 ```bash
-serverless deploy
+sls deploy
 ```
 
-_Note:_ `serverless deploy` only works if you have already set up the serverless framework locally, including logging in and connecting to your AWS account. See the [Serverless Framework documentation](https://www.serverless.com/framework/docs/getting-started) for more information on how to do this.
+_Note:_ `sls deploy` only works if the serverless framework is already set up locally, including logging in and connecting to the AWS account. See the [Serverless Framework documentation](https://www.serverless.com/framework/docs/getting-started) for more information on how to do this.
 
-Once `serverless deploy` was successful, you can fill the DynamoDB table with some sample data by executing our `seedDatabase` function. You can do this via the following command:
+Once `sls deploy` was successful, the DynamoDB table can be filled with some sample data by executing the `seedDatabase` function.
 
 ```bash
 sls invoke --function seedDatabase --data 'unused'
 ```
 
-Now you can access the TLA's via the apps API.
+Now the "TLA Resolver" endpoints can be accessed.
 
 ### Use Cases and Endpoints
 
-The resolver currently supports the following use cases, for which we provide some sample CURLs.
+The Resolver currently supports the following use cases, for which sample CURLs were provided.
 
-_Disclaimer:_ Please note that we have not implemented any identity and access control measures for this sample application. All endpoints are publicly available; including the writing ones (commands).
+_Disclaimer:_ Please note that no identity and access control measures were implemented for this sample application yet. All endpoints are publicly available.
 
-_Note_ that you will need to replace `{baseUrl}` with the URLs you get from `sls deploy` in all the following examples.
+_Note_ that the `{baseUrl}` must be replaced with the URLs provided from `sls deploy` in all the following examples.
 
 | Endpoint          | Method | Description                                                                                                            |
 | ----------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
@@ -533,8 +567,8 @@ _Note_ that you will need to replace `{baseUrl}` with the URLs you get from `sls
 | /tlas/{groupName} | GET    | Get all TLAs of a specific group.                                                                                      |
 | /tlas/all/{name}  | GET    | Search for a TLA over all groups. This query can return multiple TLAs as a single TLA is only unique within one group. |
 
-The resolver only lists TLA that have been accepted in the "TLA Manager".
-To add a new TLA to the resolver, see the [Accept a Proposed TLA](#accept-a-proposed-tla) API of the "TLA Manager".
+The Resolver only lists TLA that have been accepted in the "TLA Manager".
+To add a new TLA to the Resolver, see the [Accept a Proposed TLA](#accept-a-proposed-tla) API of the "TLA Manager".
 
 #### Get All TLA Groups
 
@@ -647,7 +681,7 @@ The endpoint `/tlas/{groupName}` (GET) returns all TLAs of a specific group.
 
 #### Search TLA in All Groups
 
-With the endpoint `/tlas/all/{name}` (GET) you can search for a TLA through all groups. Note that this might return multiple results, as TLAs are only unique within one group.
+With the endpoint `/tlas/all/{name}` (GET) a TLA can be searched through all groups. Note that this might return multiple results, as TLAs are only unique within one group.
 
 **Sample CURL**: `curl -X GET {baseUrl}/tlas/all/ACL`
 
@@ -669,9 +703,48 @@ With the endpoint `/tlas/all/{name}` (GET) you can search for a TLA through all 
 ]
 ```
 
-## TLA Reports
+## TLA Reports Microservice
 
-<!-- TODO -->
+### Build and Deploy
+
+The Reports microservice is implemented in Python and is deployed with the Serverless Framework.
+
+```bash
+cd reports
+sls deploy
+```
+
+The command above packages the Python Lambda function together with its dependencies and deploys the service. The `serverless-python-requirements` plugin handles the Python packages listed in `requirements.txt` during deployment.
+
+_Note:_ `sls deploy` only works if the serverless framework is already set up locally, including logging in and connecting to the AWS account. See the [Serverless Framework documentation](https://www.serverless.com/framework/docs/getting-started) for more information on how to do this.
+
+### Use Cases
+
+The "TLA Reports" microservice can not be directly accessed via restful HTTP endpoints, instead it receives messages from the "TLA Manager" microservice via the SQS and sends events to the EventBridge to inform the Manager about the status of the report. For more information on the communication between the Manager and Reports microservice, see the [Infrastructure](#infrastructure) section.
+
+To request the generation or check the status of a new report, the `/reports` endpoint of the "TLA Manager" can be used (see [Create a TLA Report](#create-a-tla-report) and [Get Status of a TLA Report](#get-status-of-a-tla-report)).
+
+[↑ Back to Table of Contents](#table-of-contents)
+
+## Complete System Deployment
+
+Deployment of the full application with all its microservices can be achieved either by using GitLab CI/CD pipelines or a deployment from a local machine. For both deployment options, two environment variables need to be set beforehand:
+
+```bash
+export TLA_SAMPLE_APP_SERVERLESS_ORG=<your-org>
+export SERVERLESS_ACCESS_KEY=<your-access-key>
+```
+
+### CI/CD pipeline
+
+Set the mentioned environment variables in GitLab under <kbd>Settings</kbd> > <kbd>CI/CD</kbd> > <kbd>Variables</kbd> and push the code to the repository.
+This will trigger the CI/CD pipeline which will deploy the current state of the application to AWS.
+
+### Manual Deployment via Shell Script
+
+The shell script `deploy_local.sh` in the root directory of the repository deploys the whole app, including all microservices and the infrastructure.
+To deploy the app, simply set the two mentioned environment variables and execute the script.
+As a prerequisite, [Docker](https://www.docker.com/) must be installed.
 
 ## Contributing
 
@@ -687,6 +760,8 @@ Contributions are always welcome! Here are some ways how you can contribute:
 
 This refactored version of the [original serverless TLA sample application](https://github.com/OST-Cloud-Application-Lab/tla-sample-serverless) was implemented by [Anja Friedrich](https://github.com/zwieble) and [Mona Panchaud](https://github.com/panmona) as part of a group assignment for the [Cloud Solutions](https://studien.ost.ch/allModules/37167_M_CldSol.html) course at [OST](https://www.ost.ch/de/studium/informatik/bachelor-informatik) in the spring semester of 2025. Many thanks to Anja and Mona for their contribution!
 
-## Licence
+## License
 
 This project is released under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+
+[↑ Back to Table of Contents](#table-of-contents)

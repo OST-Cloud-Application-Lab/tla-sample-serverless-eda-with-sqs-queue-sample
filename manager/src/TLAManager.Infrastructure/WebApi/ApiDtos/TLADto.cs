@@ -2,33 +2,15 @@ using System.Text.Json.Serialization;
 
 namespace TLAManager.Infrastructure.WebApi.Dtos;
 
-public class TLADto
+public class TLADto(string name, string meaning, ISet<string> alternativeMeanings, string? link)
 {
-    public string Name { get; }
+    public string Name { get; } = name;
 
-    public string Meaning { get; }
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public ISet<string>? AlternativeMeanings { get; private set; }
+    public string Meaning { get; } = meaning;
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Link { get; private set; }
+    public ISet<string>? AlternativeMeanings { get; } = alternativeMeanings;
 
-    public TLADto(string name, string meaning)
-    {
-        Name = name;
-        Meaning = meaning;
-    }
-
-    public TLADto WithAlternativeMeanings(ISet<string> alternativeMeanings)
-    {
-        AlternativeMeanings = alternativeMeanings;
-        return this;
-    }
-
-    public TLADto WithLink(string? link)
-    {
-        Link = link;
-        return this;
-    }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Link { get; } = link;
 }

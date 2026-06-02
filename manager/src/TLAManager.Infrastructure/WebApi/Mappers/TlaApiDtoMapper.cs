@@ -10,9 +10,7 @@ public static class TLAApiDtoMapper
         return new GroupDto(
             group.Name.Name,
             group.Description,
-            group.Tlas.Select(tla => new TLADto(tla.Name.Name, tla.Meaning)
-                    .WithAlternativeMeanings(tla.AlternativeMeanings)
-                    .WithLink(tla.GetAbsoluteUri()))
+            group.Tlas.Select(tla => new TLADto(tla.Name.Name, tla.Meaning, tla.AlternativeMeanings, tla.GetAbsoluteUri()))
                 .ToList()
         );
     }

@@ -1,0 +1,19 @@
+# VCS and docs
+.git
+.gitlab-ost/
+docs/
+
+# Generated Serverless artifacts (can contain invalid/symlinked paths)
+**/.serverless/
+
+# Build outputs
+**/bin/
+**/obj/
+**/target/
+
+# IDE caches
+**/.vs/
+
+# Python cache
+**/__pycache__/
+**/*.pyc

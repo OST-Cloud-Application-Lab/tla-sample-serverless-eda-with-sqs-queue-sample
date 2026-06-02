@@ -35,7 +35,6 @@ deploy-reports:
       - main
   script:
     - echo "Deploying reports service..."
-    - npm ci
     - sls deploy
     - echo "Reports service successfully deployed."
   dependencies: [build-reports]
@@ -54,7 +53,6 @@ undeploy-reports:
       - main
   script:
     - echo "Undeploying reports service..."
-    - npm ci
     - sls remove
     - echo "Reports service successfully undeployed."
   dependencies: [build-reports]

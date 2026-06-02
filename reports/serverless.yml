@@ -7,7 +7,7 @@ provider:
   region: us-east-1
   runtime: python3.14
   environment:
-    TLA_REPORT_BUCKET: tla-reports-bucket-${sls:stage}-${aws:accountId}
+    TLA_REPORT_BUCKET: tla-reports-bucket-${sls:stage}-${aws:accountId}-oebr
     TLA_EVENT_BUS_NAME: ${cf:tla-infrastructure-serverless-${sls:stage}.TLAEventBusName}
 
   iamRoleStatements:
@@ -21,20 +21,15 @@ provider:
       Resource:
         - ${cf:tla-infrastructure-serverless-${sls:stage}.TLAEventBusArn}
 
-# TODO shouldn't be needed?
-plugins:
-  - serverless-python-requirements
-
 functions:
   generateReport:
     handler: reports.generate_report
     timeout: 30
-    # reservedConcurrency: 1 # TODO does not work
     events:
       - sqs:
           arn: ${cf:tla-infrastructure-serverless-${sls:stage}.TLAReportQueueArn}
           batchSize: 1
-          maximumConcurrency: 2 # TODO really needed= > error below 2 ??
+          maximumConcurrency: 2
 
 resources:
   Resources:
@@ -65,7 +60,5 @@ resources:
 
 custom:
   pythonRequirements:
-    dockerizePip: false
-    slim: true
     noDeploy:
       - boto3
