@@ -1,6 +1,6 @@
 # Three Letter Abbreviations (TLA) Sample Application - Implemented Serverless
 
-[![Build and deploy main branch](https://gitlab.ost.ch/cld-sol/fs26/grp21/tla-sample-serverless-eda-dotnet-java/badges/main/pipeline.svg)](https://gitlab.ost.ch/cld-sol/fs26/grp21/tla-sample-serverless-eda-dotnet-java/-/commits/main) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build and deploy main branch](https://github.com/OST-Cloud-Application-Lab/tla-sample-serverless-eda-with-sqs-queue-sample/actions/workflows/main_build.yml/badge.svg)](https://github.com/OST-Cloud-Application-Lab/tla-sample-serverless-eda-with-sqs-queue-sample/actions/workflows/main_build.yml) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 This repository implements the [Three Letter Abbreviations (TLA) Sample Application](https://github.com/ContextMapper/ddd-cm-tla-sample-application) of the [Context Mapper](https://contextmapper.org) project with serverless technology.
 It can easily be deployed on AWS.
@@ -36,7 +36,7 @@ The following diagram gives an architectural overview of the application:
 The application consists of the following microservices:
 
 - **TLA Resolver microservice** provides a public API for querying TLAS with an _ACCEPTED_ status.
-  It utilizes a dedicated DynamoDB table to serve public traffic independently from the _Manager microservice_.
+  It utilizes a dedicated DynamoDB table to serve public traffic independently of the _Manager microservice_.
 - **TLA Manager microservice** handles administrative commands, including the creation and approval of TLAs and groups.
   It allows _PROPOSED_ TLAs to be transitioned to _ACCEPTED_ upon review.
   Additionally, it serves as the interface for ordering PDF reports. It manages two DynamoDB tables to store TLA data and report states.
@@ -215,17 +215,18 @@ The message includes all the necessary information for the _Reports microservice
 The body contains the same structure as the previous described structures of the event types.
 
 ```json
-"Records": [
+{
+  "Records": [
     {
       "messageId": "{}",
       "receiptHandle": "{}",
       "body": "{}",
       "attributes": {
-          "ApproximateReceiveCount": "1",
-          "AWSTraceHeader": "{}",
-          "SentTimestamp": "{}",
-          "SenderId": "A...M:tla-manager-serverless-dev-createReport",
-          "ApproximateFirstReceiveTimestamp": "{}"
+        "ApproximateReceiveCount": "1",
+        "AWSTraceHeader": "{}",
+        "SentTimestamp": "{}",
+        "SenderId": "A...M:tla-manager-serverless-dev-createReport",
+        "ApproximateFirstReceiveTimestamp": "{}"
       },
       "messageAttributes": {},
       "md5OfBody": "{}",
@@ -233,13 +234,53 @@ The body contains the same structure as the previous described structures of the
       "eventSourceARN": "arn:aws:sqs:us-east-1:6...2:tla-report-queue-dev",
       "awsRegion": "us-east-1"
     }
-]
+  ]
+}
 ```
 
 An example of the `body` of an actual event:
 
 ```json
-"body": "{\n  \"metadata\": {\n    \"version\": \"1.0\",\n    \"created_at\": \"4/5/2026 6:31:46 PM\",\n    \"domain\": {\n      \"name\": \"TLAs\",\n      \"subdomain\": \"report_generation\",\n      \"service\": \"TLAManager\",\n      \"category\": \"domain_event\",\n      \"event\": \"TLAReport_Requested\"\n    }\n  },\n  \"data\": {\n    \"reportId\": \"4fd19fe5-0ff6-48cb-b287-8610988d5cfb\",\n    \"tlaGroups\": [\n      {\n        \"name\": \"DDD\",\n        \"description\": \"Domain-Driven Design\",\n        \"tlAs\": [\n          {\n            \"name\": \"ACL\",\n            \"meaning\": \"Anticorruption Layer\",\n            \"alternativeMeanings\": [],\n            \"status\": \"Accepted\",\n            \"link\": null\n          },\n          {\n            \"name\": \"CF\",\n            \"meaning\": \"Conformist\",\n            \"alternativeMeanings\": [],\n            \"status\": \"Accepted\",\n            \"link\": null\n          },\n          {\n            \"name\": \"OHS\",\n            \"meaning\": \"Open Host Service\",\n            \"alternativeMeanings\": [],\n            \"status\": \"Accepted\",\n            \"link\": null\n          },\n          {\n            \"name\": \"PL\",\n            \"meaning\": \"Published Language\",\n            \"alternativeMeanings\": [],\n            \"status\": \"Accepted\",\n            \"link\": null\n          },\n          {\n            \"name\": \"SK\",\n            \"meaning\": \"Shared Kernel\",\n            \"alternativeMeanings\": [],\n            \"status\": \"Accepted\",\n            \"link\": null\n          }\n        ]\n      }\n    ]\n  }\n}"
+{
+  "body": {
+    "metadata": {
+      "version": "1.0",
+      "created_at": "4/5/2026 6:31:46 PM",
+      "domain": {
+        "name": "TLAs",
+        "subdomain": "report_generation",
+        "service": "TLAManager",
+        "category": "domain_event",
+        "event": "TLAReport_Requested"
+      }
+    },
+    "data": {
+      "reportId": "4fd19fe5-0ff6-48cb-b287-8610988d5cfb",
+      "tlaGroups": [
+        {
+          "name": "DDD",
+          "description": "Domain-Driven Design",
+          "tlAs": [
+            {
+              "name": "ACL",
+              "meaning": "Anticorruption Layer",
+              "alternativeMeanings": [],
+              "status": "Accepted",
+              "link": null
+            },
+            {
+              "name": "CF",
+              "meaning": "Conformist",
+              "alternativeMeanings": [],
+              "status": "Accepted",
+              "link": null
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
 ```
 
 [↑ Back to Table of Contents](#table-of-contents)
@@ -772,7 +813,8 @@ Contributions are always welcome! Here are some ways how you can contribute:
 
 ## Acknowledgements
 
-This refactored version of the [original serverless TLA sample application](https://github.com/OST-Cloud-Application-Lab/tla-sample-serverless) was implemented by [Anja Friedrich](https://github.com/zwieble) and [Mona Panchaud](https://github.com/panmona) as part of a group assignment for the [Cloud Solutions](https://studien.ost.ch/allModules/37167_M_CldSol.html) course at [OST](https://www.ost.ch/de/studium/informatik/bachelor-informatik) in the spring semester of 2025. Many thanks to Anja and Mona for their contribution!
+This extended version of the [original serverless TLA sample application](https://github.com/OST-Cloud-Application-Lab/tla-sample-serverless) (refactored in 2025 by [Anja Friedrich](https://github.com/zwieble) and [Mona Panchaud](https://github.com/panmona)) was implemented by [Lukas Oesch](https://github.com/loe207) and [Marcel Braun](https://github.com/frogfrequency) as part of a group assignment for the [Cloud Solutions](https://studien.ost.ch/allModules/37167_M_CldSol.html) course at [OST](https://www.ost.ch/de/studium/informatik/bachelor-informatik) during the Spring Semester 2026. Many thanks to Lukas and Marcel for their valuable contribution.
+
 
 ## License
 
