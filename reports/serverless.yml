@@ -7,7 +7,7 @@ provider:
   region: us-east-1
   runtime: python3.14
   environment:
-    TLA_REPORT_BUCKET: tla-reports-bucket-${sls:stage}-${aws:accountId}-${aws:region}-oebr
+    TLA_REPORT_BUCKET: tla-reports-bucket-${sls:stage}-${aws:accountId}-${aws:region}-cal
     TLA_EVENT_BUS_NAME: ${cf:tla-infrastructure-serverless-${sls:stage}.TLAEventBusName}
 
   iamRoleStatements:
