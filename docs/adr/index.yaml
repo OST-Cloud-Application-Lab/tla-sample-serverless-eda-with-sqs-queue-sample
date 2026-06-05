@@ -1,0 +1,55 @@
+decisions:
+    "0001":
+        adr_id: "0001"
+        title: Divide the system into three Bounded Contexts
+        status: decided
+        tags: []
+        links:
+            precedes: []
+            succeeds: []
+        comments: []
+    "0002":
+        adr_id: "0002"
+        title: Version all services in a monorepo
+        status: decided
+        tags: []
+        links:
+            precedes: []
+            succeeds: []
+        comments: []
+    "0003":
+        adr_id: "0003"
+        title: Use Serverless framework to deploy to AWS
+        status: decided
+        tags: []
+        links:
+            precedes: []
+            succeeds: []
+        comments: []
+    "0004":
+        adr_id: "0004"
+        title: Apply Onion Architecture in the Manager and Resolver microservices
+        status: decided
+        tags: []
+        links:
+            precedes: []
+            succeeds: []
+        comments: []
+    "0005":
+        adr_id: "0005"
+        title: Deploy shared infrastructure in a separate Serverless stack
+        status: decided
+        tags: []
+        links:
+            precedes: []
+            succeeds: []
+        comments: []
+    "0006":
+        adr_id: "0006"
+        title: Integrate microservices exclusively via events and messages
+        status: decided
+        tags: []
+        links:
+            precedes: []
+            succeeds: []
+        comments: []
