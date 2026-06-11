@@ -47,7 +47,7 @@ jobs:
       # ----------------------------------------------------------------------
 
       # .NET tests for TLA Manager (NetArchTest)
-      - name: Compile rules (netarchtext)
-        run: ade compile -i docs/adr -p netarchtest --config ade-manager.yaml
+      - name: Compile rules (netarchtest)
+        run: ade compile -i docs/adr -p netarchtest
       - name: Run generated netarch tests
         run: dotnet test ./manager/src/TLAManager.Services.Tests/TLAManager.Services.Tests.csproj
