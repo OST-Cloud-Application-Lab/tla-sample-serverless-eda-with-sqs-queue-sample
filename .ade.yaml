@@ -5,6 +5,7 @@ defaults:
     verify:
         input: ./docs/adr
         plugin: fscheck
+# TODO: move to service-specific config file
 plugin_configs:
     netarchtest:
         assembly-prefixes: TLAManager.
