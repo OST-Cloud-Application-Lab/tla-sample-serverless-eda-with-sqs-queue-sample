@@ -1,0 +1,7 @@
+adr "0005" "Deploy shared infrastructure in a separate Serverless stack"
+
+
+file "infrastrucure_must_be_deployed_in_a_separate_stack" {
+  path "infrastructure/serverless.yml" must exist
+  severity error
+}

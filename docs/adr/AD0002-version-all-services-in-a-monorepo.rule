@@ -1,0 +1,21 @@
+adr "0002" "Version all services in a monorepo"
+
+
+path "Manager" = "manager"
+path "Resolver" = "resolver"
+path "Reports" = "reports"
+
+file "BC_manager_must_exist" {
+  Manager must exist
+  severity error
+}
+
+file "BC_resolver_must_exist" {
+  Resolver must exist
+  severity error
+}
+
+file "BC_reports_must_exist" {
+  Reports must exist
+  severity error
+}

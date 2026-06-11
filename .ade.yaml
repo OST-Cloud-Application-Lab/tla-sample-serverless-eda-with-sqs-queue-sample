@@ -1,0 +1,7 @@
+defaults:
+    compile:
+        input: ./docs/adr
+        plugin: netarchtest
+    verify:
+        input: ./docs/adr
+        plugin: fscheck

@@ -49,4 +49,9 @@ obj/
 
 **/.vs/*
 **/node_modules/*
+
+### DotNet Generated Sources ###
+**/*.g.cs
+
+### Maven Wrapper files ###
 **/.mvn/*

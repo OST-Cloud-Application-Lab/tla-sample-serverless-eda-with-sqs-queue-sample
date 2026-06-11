@@ -1,0 +1,16 @@
+adr "0003" "Use Serverless framework to deploy to AWS"
+
+file "manager_must_be_deployed_with_serverless" {
+  path "manager/serverless.yml" must exist
+  severity error
+}
+
+file "resolver_must_be_deployed_with_serverless" {
+  path "resolver/serverless.yml" must exist
+  severity error
+}
+
+file "reports_must_be_deployed_with_serverless" {
+  path "reports/serverless.yml" must exist
+  severity error
+}
