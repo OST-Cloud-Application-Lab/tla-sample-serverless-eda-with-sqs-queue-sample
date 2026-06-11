@@ -1,7 +1,42 @@
 adr "0005" "Deploy shared infrastructure in a separate Serverless stack"
 
+path "SLS_config_infra" = "infrastructure/serverless.yml"
+
+path "SLS_config_manager" = "manager/serverless.yml"
+path "SLS_config_resolver" = "resolver/serverless.yml"
+path "SLS_config_reports" = "reports/serverless.yml"
 
 file "infrastrucure_must_be_deployed_in_a_separate_stack" {
-  path "infrastructure/serverless.yml" must exist
+  SLS_config_infra must exist
+  severity error
+}
+
+file "event_bridge_must_be_defined_in_infrastructure_stack" {
+  SLS_config_infra must contain "TLAEventBus:"
+  SLS_config_infra must contain "AWS::Events::EventBus"
+  severity error
+}
+
+file "sqs_queue_must_be_defined_in_infrastructure_stack" {
+  SLS_config_infra must contain "TLAReportQueue:"
+  SLS_config_infra must contain "AWS::SQS::Queue"
+  severity error
+}
+
+file "no_infra_resources_in_manager_stack" {
+  SLS_config_manager must not contain "AWS::Events::EventBus"
+  SLS_config_manager must not contain "AWS::SQS::Queue"
+  severity error
+}
+
+file "no_infra_resources_in_resolver_stack" {
+  SLS_config_resolver must not contain "AWS::Events::EventBus"
+  SLS_config_resolver must not contain "AWS::SQS::Queue"
+  severity error
+}
+
+file "no_infra_resources_in_reports_stack" {
+  SLS_config_reports must not contain "AWS::Events::EventBus"
+  SLS_config_reports must not contain "AWS::SQS::Queue"
   severity error
 }
