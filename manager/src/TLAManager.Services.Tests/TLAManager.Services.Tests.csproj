@@ -20,5 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TLAManager.Application\TLAManager.Application.csproj" />
+    <ProjectReference Include="..\TLAManager.Infrastructure\TLAManager.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

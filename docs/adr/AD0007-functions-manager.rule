@@ -1,0 +1,8 @@
+adr "0007" "Implement all microservice endpoints as Serverless functions"
+
+component "ManagerFunctions" = "TLAManager.Infrastructure.WebApi.Functions"
+
+code "functions_must_extend_base_function" {
+  class in ManagerFunctions must extend class "TLAManager.Infrastructure.WebApi.FunctionBase"
+  severity error
+}

@@ -53,3 +53,12 @@ decisions:
             precedes: []
             succeeds: []
         comments: []
+    "0007":
+        adr_id: "0007"
+        title: Implement all microservice endpoints as Serverless functions
+        status: decided
+        tags: []
+        links:
+            precedes: []
+            succeeds: []
+        comments: []
