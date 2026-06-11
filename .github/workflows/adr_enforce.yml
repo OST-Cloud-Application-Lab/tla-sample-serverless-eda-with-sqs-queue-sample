@@ -7,12 +7,18 @@ on:
 
 jobs:
   ade:
+    name: Run ADE to enforce architectural decisions
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
 
       - name: Install .NET
         uses: actions/setup-dotnet@v5
