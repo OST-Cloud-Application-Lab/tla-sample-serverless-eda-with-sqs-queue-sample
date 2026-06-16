@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace TLAManager.Services.Tests;
+namespace TLAManager.Tests;
 
 public class DummyTests
 {

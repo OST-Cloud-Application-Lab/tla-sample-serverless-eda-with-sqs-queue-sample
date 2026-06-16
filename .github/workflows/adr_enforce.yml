@@ -1,0 +1,53 @@
+name: Enforce architectural decisions
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ade:
+    name: Run ADE to enforce architectural decisions
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0'
+
+      - name: Install ade
+        run: go install github.com/phi42/ad-enforcement-tool/ade@v0.1.3-dev
+
+      - name: Install plugins
+        run: |
+          ade plugin install fscheck --repo github.com/phi42/ad-plugin-fscheck@v0.1.1
+          ade plugin install netarchtest --repo github.com/phi42/ad-plugin-netarchtest@v0.1.3-dev
+          ade plugin list
+
+      # ----------------------------------------------------------------------
+      # Verify mode: run file-system checks directly, no test compilation.
+      # ----------------------------------------------------------------------
+      - name: Verify rules for all services (fscheck)
+        run: ade verify -i docs/adr -p fscheck
+
+      # ----------------------------------------------------------------------
+      # Compile mode: generate test code and run it with the project's normal
+      # test runner. Keep only the block that matches your language; delete or
+      # comment out the rest.
+      # ----------------------------------------------------------------------
+
+      # .NET tests for TLA Manager (NetArchTest)
+      - name: Compile rules (netarchtest)
+        run: ade compile --config .ade-manager.yaml
+      - name: Run generated netarch tests
+        run: dotnet test ./manager/src/TLAManager.Tests/TLAManager.Tests.csproj

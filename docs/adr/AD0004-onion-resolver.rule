@@ -1,0 +1,3 @@
+adr "0004" "Apply Onion Architecture in the Manager and Resolver microservices"
+
+# TODO: implement plugin for Java to enforce resolver architecture as well

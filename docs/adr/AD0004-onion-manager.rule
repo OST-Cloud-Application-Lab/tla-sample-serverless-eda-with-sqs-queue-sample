@@ -1,0 +1,15 @@
+adr "0004" "Apply Onion Architecture in the Manager and Resolver microservices"
+
+component "Domain"         = "TLAManager.Domain"
+component "Application"    = "TLAManager.Application"
+component "Infrastructure" = "TLAManager.Infrastructure"
+
+code "domain_isolated" {
+  Domain must not depend on Application, Infrastructure
+  severity error
+}
+
+code "application_inward" {
+  Application must only depend on Domain
+  severity error
+}
