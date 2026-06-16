@@ -5,4 +5,4 @@ defaults:
 plugin_configs:
     netarchtest:
         assembly-prefixes: TLAManager.
-        output-dir: ./manager/src/TLAManager.Services.Tests/ArchTests/Generated
+        output-dir: ./manager/src/TLAManager.Tests/ArchTests/Generated

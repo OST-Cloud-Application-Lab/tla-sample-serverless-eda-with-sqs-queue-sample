@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.4.11626.88 stable
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TLAManager.Services.Tests", "src\TLAManager.Services.Tests\TLAManager.Services.Tests.csproj", "{AE4FDA50-B37F-4A2C-A828-F86A86C72127}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TLAManager.Tests", "src\TLAManager.Tests\TLAManager.Tests.csproj", "{AE4FDA50-B37F-4A2C-A828-F86A86C72127}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TLAManager.Domain", "src\TLAManager.Domain\TLAManager.Domain.csproj", "{CA3DEB89-AE83-4A25-BF81-9A8CB14B54C3}"
 EndProject

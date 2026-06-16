@@ -50,4 +50,4 @@ jobs:
       - name: Compile rules (netarchtest)
         run: ade compile --config .ade-manager.yaml
       - name: Run generated netarch tests
-        run: dotnet test ./manager/src/TLAManager.Services.Tests/TLAManager.Services.Tests.csproj
+        run: dotnet test ./manager/src/TLAManager.Tests/TLAManager.Tests.csproj
