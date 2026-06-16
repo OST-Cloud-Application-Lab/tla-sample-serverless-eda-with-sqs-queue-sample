@@ -26,7 +26,7 @@ jobs:
           dotnet-version: '10.0'
 
       - name: Install ade
-        run: go install github.com/phi42/ad-enforcement-tool/ade@v0.1.2-dev
+        run: go install github.com/phi42/ad-enforcement-tool/ade@v0.1.3-dev
 
       - name: Install plugins
         run: |
@@ -48,6 +48,6 @@ jobs:
 
       # .NET tests for TLA Manager (NetArchTest)
       - name: Compile rules (netarchtest)
-        run: ade compile -i docs/adr -p netarchtest
+        run: ade compile --config .ade-manager.yaml
       - name: Run generated netarch tests
         run: dotnet test ./manager/src/TLAManager.Services.Tests/TLAManager.Services.Tests.csproj

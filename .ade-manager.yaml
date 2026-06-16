@@ -1,0 +1,8 @@
+defaults:
+    compile:
+        input: ./docs/adr
+        plugin: netarchtest
+plugin_configs:
+    netarchtest:
+        assembly-prefixes: TLAManager.
+        output-dir: ./manager/src/TLAManager.Services.Tests/ArchTests/Generated
