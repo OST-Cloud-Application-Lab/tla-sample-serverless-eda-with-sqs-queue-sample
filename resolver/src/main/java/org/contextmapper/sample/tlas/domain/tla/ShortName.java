@@ -1,5 +1,6 @@
 package org.contextmapper.sample.tlas.domain.tla;
 
+import org.contextmapper.sample.tlas.application.TlaGroupsApplicationService;
 import org.jmolecules.ddd.annotation.ValueObject;
 
 import java.util.Objects;
@@ -8,7 +9,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 @ValueObject
 public class ShortName implements Comparable<ShortName> {
-
+    private TlaGroupsApplicationService tmp;
     private final String name;
 
     public ShortName(final String name) {
