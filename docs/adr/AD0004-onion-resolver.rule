@@ -1,3 +1,43 @@
 adr "0004" "Apply Onion Architecture in the Manager and Resolver microservices"
 
-# TODO: implement plugin for Java to enforce resolver architecture as well
+component "Domain"                    = "org.contextmapper.sample.tlas.domain"
+component "Application"               = "org.contextmapper.sample.tlas.application"
+component "InfrastructureWebAPI"      = "org.contextmapper.sample.tlas.infrastructure.webapi"
+component "InfrastructurePersistence" = "org.contextmapper.sample.tlas.infrastructure.persistence"
+component "InfrastructureApplication" = "org.contextmapper.sample.tlas.infrastructure.application"
+component "InfrastructureMigration"   = "org.contextmapper.sample.tlas.infrastructure.migration"
+
+code "domain_isolated" {
+  Domain must not depend on Application, InfrastructureWebAPI, InfrastructurePersistence, InfrastructureApplication, InfrastructureMigration
+  severity error
+}
+
+code "application_inward" {
+  Application must only depend on Domain
+  severity error
+}
+
+code "no_cycles" {
+  component "org.contextmapper.sample.tlas" must be acyclic
+  severity error
+}
+
+code "infrastructure_webapi_dependencies" {
+  InfrastructureWebAPI must only depend on Application, Domain
+  severity error
+}
+
+code "infrastructure_persistence_dependencies" {
+  InfrastructurePersistence must only depend on Application, Domain
+  severity error
+}
+
+code "infrastructure_application_dependencies" {
+  InfrastructureApplication must only depend on Application, Domain
+  severity error
+}
+
+code "infrastructure_migration_dependencies" {
+  InfrastructureMigration must only depend on Application, Domain
+  severity error
+}
