@@ -1,0 +1,11 @@
+defaults:
+    compile:
+        input: ./docs/adr
+        plugin: archunit
+plugin_configs:
+    archunit:
+        import-packages: org.contextmapper.sample.tlas
+        output-dir: ./resolver/src-gen/test/java/org/contextmapper/sample/tlas/archtests
+        generated-tests-package: org.contextmapper.sample.tlas.archtests
+        test-project: resolver
+        build-tool: mvn

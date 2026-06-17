@@ -25,6 +25,13 @@ jobs:
         with:
           dotnet-version: '10.0'
 
+      - name: Install JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
       - name: Install ade
         run: go install github.com/phi42/ad-enforcement-tool/ade@v0.1.3-dev
 
@@ -32,6 +39,7 @@ jobs:
         run: |
           ade plugin install fscheck --repo github.com/phi42/ad-plugin-fscheck@v0.1.1
           ade plugin install netarchtest --repo github.com/phi42/ad-plugin-netarchtest@v0.1.3-dev
+          ade plugin install archunit --repo github.com/stefan-ka/ad-plugin-archunit@v0.1.0
           ade plugin list
 
       # ----------------------------------------------------------------------
@@ -48,6 +56,21 @@ jobs:
 
       # .NET tests for TLA Manager (NetArchTest)
       - name: Compile rules (netarchtest)
-        run: ade compile --config .ade-manager.yaml
+        run: |
+          ade compile -i docs/adr/AD0004-onion-manager.rule --config .ade-manager.yaml
+          ade compile -i docs/adr/AD0007-functions-manager.rule --config .ade-manager.yaml
       - name: Run generated netarch tests
         run: dotnet test ./manager/src/TLAManager.Tests/TLAManager.Tests.csproj
+
+      # Java tests for TLA Resolver (ArchUnit)
+      - name: Compile rules (archunit)
+        run: |
+          ade compile -i docs/adr/AD0004-onion-resolver.rule --config .ade-resolver.yaml
+      - name: Run generated archunit tests
+        working-directory: ./resolver
+        run: ./mvnw -B clean test --file pom.xml
+      - uses: actions/cache@v5
+        id: ad-cache-resolver-target
+        with:
+          path: resolver/target
+          key: tla-sample-app-serverless-resolver-target-ad-${{ github.run_id }}
