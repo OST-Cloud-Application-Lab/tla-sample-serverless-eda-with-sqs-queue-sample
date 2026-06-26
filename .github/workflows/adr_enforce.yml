@@ -33,12 +33,12 @@ jobs:
           cache: maven
 
       - name: Install ade
-        run: go install github.com/phi42/ad-enforcement-tool/ade@v0.1.3-dev
+        run: go install github.com/phi42/ad-enforcement-tool/ade@v1.0.0
 
       - name: Install plugins
         run: |
-          ade plugin install fscheck --repo github.com/phi42/ad-plugin-fscheck@v0.1.1
-          ade plugin install netarchtest --repo github.com/phi42/ad-plugin-netarchtest@v0.1.3-dev
+          ade plugin install fscheck --repo github.com/phi42/ad-plugin-fscheck@v1.0.0
+          ade plugin install netarchtest --repo github.com/phi42/ad-plugin-netarchtest@v1.0.0
           ade plugin install archunit --repo github.com/stefan-ka/ad-plugin-archunit@v0.1.0
           ade plugin list
 
